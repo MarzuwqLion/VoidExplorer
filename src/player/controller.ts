@@ -81,7 +81,6 @@ export class PlayerController {
     this.cc.setUp({ x: 0, y: 1, z: 0 });
     this.cc.setMaxSlopeClimbAngle(SIM.maxSlopeDeg * DEG);
     this.cc.setMinSlopeSlideAngle((SIM.maxSlopeDeg + 5) * DEG);
-    this.cc.enableAutostep(SIM.stepHeight, 0.15, false);
     this.cc.enableSnapToGround(0.4);
     this.cc.setSlideEnabled(true);
     this.pos.set(x, y, z);
@@ -310,15 +309,43 @@ export class PlayerController {
     this.grounded = this.cc.computedGrounded();
     if (this.grounded && this.vy < 0) this.vy = 0;
     const t = this.body.translation();
-    const nx = t.x + mv.x, ny = t.y + mv.y, nz = t.z + mv.z;
+    let nx = t.x + mv.x, ny = t.y + mv.y, nz = t.z + mv.z;
+    // Manual step-up: blocked while grounded, with a walkable ledge no higher than the step height ahead.
+    const want = Math.hypot(desired.x, desired.z), got = Math.hypot(mv.x, mv.z);
+    if (this.grounded && want > 1e-4 && got < want * 0.6) {
+      const dx = desired.x / want, dz = desired.z / want;
+      const reach = BODY.radius + 0.12;
+      const top = this.physics.ray({ x: t.x + dx * reach, y: t.y + SIM.stepHeight + 0.05, z: t.z + dz * reach }, { x: 0, y: -1, z: 0 }, SIM.stepHeight + 0.1);
+      if (top && top.normal.y > 0.75) {
+        const h = top.point.y - t.y;
+        const clearAbove = !this.physics.ray({ x: t.x, y: top.point.y + 0.3, z: t.z }, { x: dx, y: 0, z: dz }, reach + 0.1);
+        if (h > 0.03 && h <= SIM.stepHeight + 0.01 && clearAbove) {
+          nx = t.x + dx * want;
+          nz = t.z + dz * want;
+          ny = top.point.y + 0.01;
+          this.vy = 0;
+        }
+      }
+    }
     this.body.setNextKinematicTranslation({ x: nx, y: ny, z: nz });
     this.odometer += Math.hypot(mv.x, mv.z);
     this.pos.set(nx, ny, nz);
-    // Keep velocity consistent with blocked movement so we don't build speed into walls.
-    if (dt > 0 && this.state !== 'roll') {
-      const ax = mv.x / dt, az = mv.z / dt;
-      if (Math.abs(ax) < Math.abs(this.vel.x)) this.vel.x = ax;
-      if (Math.abs(az) < Math.abs(this.vel.z)) this.vel.z = az;
+    // Remove velocity into walls (collider normals that are mostly horizontal).
+    if (this.state !== 'roll') {
+      const n = this.cc.numComputedCollisions();
+      for (let i = 0; i < n; i++) {
+        const c = this.cc.computedCollision(i);
+        if (!c) continue;
+        const nx = c.normal1.x, ny = c.normal1.y, nz = c.normal1.z;
+        if (Math.abs(ny) > 0.7) continue;
+        const hl = Math.hypot(nx, nz) || 1;
+        const ux = nx / hl, uz = nz / hl;
+        const into = this.vel.x * ux + this.vel.z * uz;
+        if (into < 0) {
+          this.vel.x -= ux * into;
+          this.vel.z -= uz * into;
+        }
+      }
     }
   }
 }

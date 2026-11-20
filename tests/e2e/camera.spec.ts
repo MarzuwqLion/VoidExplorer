@@ -1,0 +1,37 @@
+import { test, expect } from '@playwright/test';
+import { boot, gotoScene, step, shot, errorsOf } from './helpers';
+
+test('framing: default, aiming, roadie run, crouch', async ({ page }) => {
+  await boot(page);
+  await gotoScene(page, 'gym');
+  const G = '(window as any).__game';
+  await step(page, 0.5);
+  await page.waitForTimeout(300);
+  await shot(page, 'M2/default.png');
+  await page.evaluate(() => (window as any).__game.input.hold('aim'));
+  await step(page, 0.5);
+  const fovAim = await page.evaluate(() => (window as any).__game.info().fov);
+  expect(fovAim).toBeLessThan(52);
+  await page.waitForTimeout(200);
+  await shot(page, 'M2/aiming.png');
+  await page.evaluate(() => { const g = (window as any).__game; g.input.release('aim'); g.input.move(0, 1); g.input.hold('sprint'); });
+  await step(page, 0.8);
+  const run = await page.evaluate(() => (window as any).__game.info());
+  expect(run.sprinting).toBe(true);
+  expect(run.fov).toBeGreaterThan(74);
+  await page.waitForTimeout(200);
+  await shot(page, 'M2/roadie-run.png');
+  await page.evaluate(() => { const g = (window as any).__game; g.input.clear(); g.teleport(0, 0.05, -2.95); });
+  await step(page, 0.3);
+  await page.evaluate(() => (window as any).__game.input.tap('crouch'));
+  await step(page, 0.5);
+  expect(await page.evaluate(() => (window as any).__game.info().crouched)).toBe(true);
+  await page.waitForTimeout(200);
+  await shot(page, 'M2/crouch.png');
+  await page.evaluate(() => (window as any).__game.input.hold('aim'));
+  await step(page, 0.5);
+  expect(await page.evaluate(() => (window as any).__game.info().popUp)).toBeGreaterThan(0.9);
+  await shot(page, 'M2/crouch-popup.png');
+  void G;
+  expect(errorsOf(page)).toEqual([]);
+});

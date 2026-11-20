@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: M2 Commander and camera — test gym (debug only), movement unit tests, camera-wall test, framing screenshots.
+Next up: M3 Weapons — weapon state/firing in a CombatSystem shared by gym and planet, dummies, HUD and hit feedback.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -9,10 +9,10 @@ Next up: M2 Commander and camera — test gym (debug only), movement unit tests,
   - [x] full-loop test passes in both planet orders (input layer + debug API)
   - [x] planet data test: 15 entries, exactly 2 landable
   - [x] one screenshot per scene reviewed
-- [ ] M2 Commander and camera
-  - [ ] unit tests: move speeds, roll distance, invulnerability window
-  - [ ] scripted camera-into-walls test never passes through
-  - [ ] screenshots: default, aiming, roadie run, crouch framing
+- [x] M2 Commander and camera
+  - [x] unit tests: move speeds, roll distance, invulnerability window
+  - [x] scripted camera-into-walls test never passes through
+  - [x] screenshots: default, aiming, roadie run, crouch framing
 - [ ] M3 Weapons
   - [ ] unit tests: shots-to-kill and falloff
   - [ ] scripted test kills a dummy with each weapon

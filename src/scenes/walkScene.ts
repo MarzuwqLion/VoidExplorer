@@ -101,6 +101,7 @@ export abstract class WalkScene extends Scene {
       if (this.dialogue.runner.done) this.endDialogue();
     }
     this.world.applyLook(input, dt, this.lookSlowdown());
+    if (input.pressed('shoulder') && this.world.player.mode === 'field') this.world.cam.shoulder *= -1;
     const extra = this.preStep(dt);
     this.world.stepPlayer(dt, this.world.cmdFromInput(input, extra));
     if (!this.dialogue) this.world.updateInteract(input, dt);

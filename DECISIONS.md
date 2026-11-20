@@ -7,3 +7,6 @@ Format: what — why — how to reverse.
 - @dimforge/rapier3d-compat (WASM inlined) is used so physics runs both in the browser and in Vitest under Node for headless simulation tests. Bundle is ~5 MB as a result. — Reverse: switch to @dimforge/rapier3d with a wasm loader plugin.
 - Enemies do not use Rapier bodies: they move on the baked nav grid (which stores walkable height), and shots use analytic hitboxes after a Rapier raycast against static geometry. Cheaper and makes weak spots trivial. — Reverse: add kinematic bodies in src/ai.
 - Pointer-lock loss opens the pause menu with a "Click to resume" subtitle; clicking the dimmed background or Resume re-locks. — Reverse: src/core/game.ts pause().
+- Rapier's built-in autostep did not climb 0.3 m steps in this setup, so the controller does its own step-up (probe ahead for a walkable ledge no higher than 0.35 m and lift onto it). — Reverse: re-enable cc.enableAutostep in src/player/controller.ts.
+- After a move, velocity is projected off wall normals reported by the character controller instead of clamped per axis (the clamp bled speed on small corrections). — Reverse: src/player/controller.ts.
+- On the bridge, Shift jogs (walk is the default); on planets jog is the default, light stick tilt walks and Shift is the roadie run. — Reverse: PlayerController target speed selection.

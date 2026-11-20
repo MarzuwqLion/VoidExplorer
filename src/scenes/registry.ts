@@ -3,6 +3,7 @@ import { BridgeScene } from './bridge';
 import { SystemMapScene } from './systemMap';
 import { PlanetScene } from './planet';
 import { EndScene } from './end';
+import { GymScene } from './gym';
 
 /** Registers every gameplay scene. */
 export function registerScenes(game: Game): void {
@@ -10,4 +11,5 @@ export function registerScenes(game: Game): void {
   game.register('systemMap', (g) => new SystemMapScene(g));
   game.register('planet', (g) => new PlanetScene(g));
   game.register('end', (g) => new EndScene(g));
+  game.register('gym', (g) => new GymScene(g));
 }
