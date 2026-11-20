@@ -135,6 +135,11 @@ export class EnemyViews {
         lod.visible = far;
         lod.position.copy(v.root.position);
         lod.rotation.y = v.root.rotation.y;
+        // The baked pose cannot animate, so a moving distant enemy bobs and rocks with its stride instead.
+        const gait = e.alive ? Math.min(1, e.speedNow / AI.lodGaitSpeed) : 0;
+        const ph = e.dist * AI.lodGaitRate;
+        lod.position.y += Math.abs(Math.sin(ph)) * AI.lodGaitBob * gait;
+        lod.rotation.z = Math.sin(ph) * AI.lodGaitRoll * gait;
       }
       v.root.visible = !far;
       let dy = e.yaw - e.prevYaw;

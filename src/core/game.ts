@@ -26,6 +26,7 @@ import { openPause } from '../ui/menus';
 import { MenuList } from '../ui/screens';
 import type { Scene } from '../scenes/scene';
 import { initPhysics } from '../world/physics';
+import { installShaderFixes } from '../world/shaderFixes';
 
 export type SceneFactory = (game: Game) => Scene;
 export interface GameEvents extends Record<string, unknown> {
@@ -67,6 +68,7 @@ export class Game {
     readonly canvas: HTMLCanvasElement,
     uiRoot: HTMLElement,
   ) {
+    installShaderFixes();
     let r: THREE.WebGLRenderer | null = null;
     try {
       r = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });

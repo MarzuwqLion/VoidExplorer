@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: M12 polish pass. Work the gate list top to bottom, then run the full suite and commit.
+Next up: Done. M0 to M12 ticked; definition of done met. Owner playtest per README checklist.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -52,13 +52,14 @@ Next up: M12 polish pass. Work the gate list top to bottom, then run the full su
   - [x] tuning panel changes game live
 - [x] M11 Final verification and handoff
   - [x] definition of done (spec section 13)
-- [ ] M12 Polish pass (owner request after M11: evaluate and polish everything)
-  - [ ] raiders keep rust-orange and black suits (optimiser no longer flattens merged colours; unit test)
-  - [ ] dialogue camera frames both faces from over the shoulder, never through walls; screenshot per crew member and planet NPC
-  - [ ] title and bridge suns render as clean glowing discs
-  - [ ] bridge: softer ceiling lights, set dressing, spawn camera clear of the door
-  - [ ] Korr: no snow under roofs, interiors readable
-  - [ ] system map: closer default zoom, planets readable when zoomed out, particle engine trail
-  - [ ] HUD: labelled vitals with medkit pips, shield-break and low-ammo feedback
-  - [ ] combat feedback: enemy hit flash, nicer acid pools and mortar rings
-  - [ ] full suite green, draw calls within budget, M12 screenshots reviewed
+- [x] M12 Polish pass (owner request after M11: evaluate and polish everything)
+  - [x] raiders keep rust-orange and black suits (optimiser no longer flattens merged colours; unit test)
+  - [x] dialogue camera frames both faces from over the shoulder, never through walls; screenshot per crew member and planet NPC
+  - [x] title and bridge suns render as clean glowing discs
+  - [x] bridge: softer ceiling lights, set dressing, spawn camera clear of the door
+  - [x] Korr: no snow under roofs, interiors readable
+  - [x] system map: closer default zoom, planets readable when zoomed out, particle engine trail
+  - [x] HUD: labelled vitals with medkit pips, shield-break and low-ammo feedback
+  - [x] combat feedback: enemy hit flash, nicer acid pools and mortar rings
+  - [x] NaN pixel fixed at the source (flat-shading normal guard; unit test), loading card and WebGL message
+  - [x] full suite green, draw calls within budget, M12 screenshots reviewed

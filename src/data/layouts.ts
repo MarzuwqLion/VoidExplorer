@@ -121,7 +121,8 @@ export const KORR = {
   lamps: [
     { x: 67, y: 5, z: -30, color: 0xffc890, intensity: 9, range: 18 },
     { x: 83, y: 5, z: -27, color: 0xffc890, intensity: 9, range: 18 },
-    { x: 75, y: 3.5, z: -48, color: 0xffb070, intensity: 6, range: 12 },
+    { x: 75, y: 3.5, z: -45, color: 0xffb070, intensity: 12, range: 14 },
+    { x: 75, y: 3.5, z: -53, color: 0xffb070, intensity: 12, range: 14 },
     { x: 86, y: 3, z: -38, color: 0xfff0d0, intensity: 4, range: 8 },
   ],
   nodes: [

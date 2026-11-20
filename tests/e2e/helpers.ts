@@ -9,6 +9,8 @@ export async function boot(page: Page, url = '/'): Promise<void> {
   (page as unknown as { __errors: string[] }).__errors = errors;
   await page.goto(url);
   await page.waitForFunction(() => (window as any).__game?.ready?.(), null, { timeout: 60000 });
+  // The loading card fades out once the title is up.
+  await page.waitForFunction(() => !document.getElementById('boot'), null, { timeout: 10000 });
 }
 export function errorsOf(page: Page): string[] {
   return (page as unknown as { __errors: string[] }).__errors ?? [];

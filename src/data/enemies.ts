@@ -25,6 +25,11 @@ export const AI = {
   /** Hit flash on enemy models: peak brightness and how fast it fades (per second). */
   hitFlash: 0.55,
   hitFlashDecay: 9,
+  /** Distant baked enemies: speed at full stride (m/s), stride phase per metre, bob height (m) and side rock (rad). */
+  lodGaitSpeed: 4,
+  lodGaitRate: 2.6,
+  lodGaitBob: 0.07,
+  lodGaitRoll: 0.06,
 };
 
 export interface EnemyDef {
