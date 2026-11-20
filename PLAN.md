@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: M6 System map — panel test for all 16 bodies, inputs-only flight, abort round trip, map screenshots.
+Next up: M7 Amara — layouts.ts data written; geometry in src/world/planets/amara.ts (subagent), mission runtime + Landfall mission, harvest nodes, NPCs, top-down map.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -26,11 +26,11 @@ Next up: M6 System map — panel test for all 16 bodies, inputs-only flight, abo
   - [x] dialogue graph test passes
   - [x] e2e talks to each crew member and buys an upgrade
   - [x] screenshots: bridge, dialogue camera
-- [ ] M6 System map
-  - [ ] ship beside sun and each planet: panel name/class, only Amara and Korr offer Land
-  - [ ] fly to a planet using inputs only
-  - [ ] abort round trip: bridge, map, land, abort, map, bridge
-  - [ ] screenshots: zoomed in, zoomed out, three panels
+- [x] M6 System map
+  - [x] ship beside sun and each planet: panel name/class, only Amara and Korr offer Land
+  - [x] fly to a planet using inputs only
+  - [x] abort round trip: bridge, map, land, abort, map, bridge
+  - [x] screenshots: zoomed in, zoomed out, three panels
 - [ ] M7 Amara
   - [ ] top-down map matches layout table, node counts correct
   - [ ] loop bot completes mission with and without tunnel

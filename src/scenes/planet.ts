@@ -106,7 +106,10 @@ export class PlanetScene extends FieldScene {
       y: p.y,
       z: p.z,
       yaw: this.world.cam.yaw,
-      shuttle: { x: this.world.interactables[0]?.x, z: this.world.interactables[0]?.z },
+      shuttle: (() => {
+        const s = this.world.interactables.find((i) => i.id === 'shuttle');
+        return s ? { x: s.x, y: s.y, z: s.z } : null;
+      })(),
     };
   }
 

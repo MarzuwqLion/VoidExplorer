@@ -239,6 +239,7 @@ export class SystemMapScene extends Scene {
     const input = g.input;
     if (this.commsT > 0 && (this.commsT -= dt) <= 0) this.comms.classList.remove('on');
     if (this.phase !== 'fly') {
+      this.panel.show(null, '');
       this.phaseT += dt;
       this.sim.clock += dt;
       if (this.phase === 'landing' && this.phaseT >= TRANSITIONS.landing) {
