@@ -50,6 +50,8 @@ export function disposeObject(root: THREE.Object3D): void {
   const mats = new Set<THREE.Material>();
   const geos = new Set<THREE.BufferGeometry>();
   root.traverse((o) => {
+    const light = o as unknown as { isLight?: boolean; dispose?: () => void };
+    if (light.isLight) light.dispose?.();
     const m = o as THREE.Mesh;
     if (m.geometry) geos.add(m.geometry);
     const mat = m.material as THREE.Material | THREE.Material[] | undefined;

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mat, glow } from '../materials';
+import { optimizeModel } from './optimize';
 
 export type JointName =
   | 'pelvis' | 'torso' | 'chest' | 'neck' | 'head'
@@ -103,7 +104,7 @@ export function buildHumanoid(look: HumanoidLook): Humanoid {
   }
   if (look.antenna) chest.add(part(C(0.012, 1.1, 4), dark, -0.16 * bw, 0.6, 0.14));
   const neck = joint('neck', chest, 0, 0.3, 0);
-  neck.add(part(C(0.06, 0.08), skin, 0, 0.03, 0));
+  chest.add(part(C(0.06, 0.08), skin, 0, 0.33, 0));
   const head = joint('head', neck, 0, 0.07, 0);
   if (look.helmet) {
     head.add(part(new THREE.SphereGeometry(0.15, 10, 8), armor, 0, 0.12, 0.01));
@@ -135,7 +136,7 @@ export function buildHumanoid(look: HumanoidLook): Humanoid {
   for (const side of [-1, 1] as const) {
     const L = side < 0 ? 'L' : 'R';
     const sh = joint(('shoulder' + L) as JointName, chest, side * 0.25 * bw, 0.25, 0);
-    if (!look.uniform) sh.add(part(B(0.16, 0.08, 0.2), side > 0 && look.stripe ? trim : armor, side * 0.03, 0.02, 0));
+    if (!look.uniform) chest.add(part(B(0.16, 0.08, 0.2), side > 0 && look.stripe ? trim : armor, side * 0.25 * bw + side * 0.03, 0.27, 0));
     if (look.cloth !== undefined && side > 0) {
       const cm = mat(look.cloth, { rough: 1 });
       materials.push(cm);
@@ -145,8 +146,8 @@ export function buildHumanoid(look: HumanoidLook): Humanoid {
     ua.add(part(C(0.055 * bw, 0.28), suit, 0, -0.14, 0));
     const la = joint(('lowerArm' + L) as JointName, ua, 0, -0.28, 0);
     la.add(part(C(0.05 * bw, 0.26), look.uniform ? suit : armor, 0, -0.13, 0));
-    const hand = joint(('hand' + L) as JointName, la, 0, -0.26, 0);
-    hand.add(part(B(0.07, 0.09, 0.08), look.uniform ? skin : dark, 0, -0.04, 0));
+    joint(('hand' + L) as JointName, la, 0, -0.26, 0);
+    la.add(part(B(0.07, 0.09, 0.08), look.uniform ? skin : dark, 0, -0.3, 0));
   }
   // Legs.
   for (const side of [-1, 1] as const) {
@@ -156,8 +157,8 @@ export function buildHumanoid(look: HumanoidLook): Humanoid {
     if (!look.uniform) ul.add(part(B(0.14 * bw, 0.2, 0.06), armor, 0, -0.18, -0.07));
     const ll = joint(('lowerLeg' + L) as JointName, ul, 0, -0.42, 0);
     ll.add(part(C(0.06 * bw, 0.4), look.uniform ? suit : armor, 0, -0.2, 0));
-    const ft = joint(('foot' + L) as JointName, ll, 0, -0.42, 0);
-    ft.add(part(B(0.11, 0.08, 0.24), dark, 0, -0.0, -0.05));
+    joint(('foot' + L) as JointName, ll, 0, -0.42, 0);
+    ll.add(part(B(0.11, 0.08, 0.24), dark, 0, -0.42, -0.05));
   }
   const gunMount = new THREE.Group();
   gunMount.position.set(0.06, 0.12, -0.32);
@@ -169,7 +170,7 @@ export function buildHumanoid(look: HumanoidLook): Humanoid {
   const thighMount = new THREE.Group();
   thighMount.position.set(0.11 * bw, -0.15, 0.02);
   j.upperLegR.add(thighMount);
-  root.scale.setScalar(1);
+  optimizeModel(root);
   return { root, body, joints: j, gunMount, backMount, thighMount, materials, head };
 }
 

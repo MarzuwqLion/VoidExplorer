@@ -18,6 +18,7 @@ import type { DGraph, Effect } from '../data/dialogue/types';
 import type { Enemy } from '../ai/enemy';
 import type { CompassMarker } from '../ui/hud';
 import { glow } from '../world/materials';
+import { optimizeModel } from '../world/models/optimize';
 
 /** A landable planet: terrain, mission, shuttle, combat, NPCs and resources. */
 export class PlanetScene extends FieldScene {
@@ -91,6 +92,7 @@ export class PlanetScene extends FieldScene {
     }
     // Shuttle.
     this.shuttle = buildShuttle();
+    optimizeModel(this.shuttle);
     this.three.add(this.shuttle);
     this.moveShuttle(level.shuttle.x, level.shuttle.z, level.shuttle.yaw);
     world.interactables.push({

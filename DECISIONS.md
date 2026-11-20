@@ -24,3 +24,6 @@ Format: what — why — how to reverse.
 - Okonkwo's after-action talk plays automatically the first time you speak to her after each mission; the final debrief uses automatic branches for the survey and lookout variants. — Reverse: src/data/dialogue/okonkwo.ts.
 - Bloom is on by default with a Settings toggle (EffectComposer, UnrealBloomPass, OutputPass). — Reverse: settings.bloom default in src/core/save.ts.
 - E2E runs start Vite with E2E=1, which disables HMR and file watching so edits during a long run cannot reload the test page. — Reverse: vite.config.ts.
+- Draw-call budget: rigs fold hands, feet, neck and shoulder pads into their parent joints, each joint's parts merge into one vertex-coloured mesh, only the largest two parts of an enemy cast shadows, and enemies beyond 18 m swap to a single baked mesh. Busy moments measured at bridge 201, Amara 232, Korr 269 (including shadow and bloom passes). — Reverse: src/world/models/optimize.ts and LOD_DIST in src/ai/enemyViews.ts.
+- Korr gets a soft suit lamp following the commander so the dusk interiors stay readable. — Reverse: PlanetScene.enter.
+- Lights are disposed with their scene (shadow maps), which removed a texture leak across scene changes. — Reverse: disposeObject in src/scenes/scene.ts.

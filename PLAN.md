@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: M9/M10 — run tests/e2e/closing.spec.ts and polish.spec.ts, fix failures, review M9/M10 screenshots, then M11 handoff.
+Next up: M11 — run every check (typecheck, lint, unit, e2e, build, preview), review fresh screenshots, KNOWN_ISSUES, final report.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -41,14 +41,14 @@ Next up: M9/M10 — run tests/e2e/closing.spec.ts and polish.spec.ts, fix failur
   - [x] loop bot completes mission through both branches; threaten spawns extra wave, reassure leaves yard unaware
   - [x] Foreman sim: cannon kills stationary player in open, cover blocks, heat-sink fire kills in 15-120 s
   - [x] screenshot of every beat
-- [ ] M9 Closing the loop
-  - [ ] full-loop both orders checks debrief variant per lookout choice
-  - [ ] save/continue restores mid-game state
-  - [ ] five scene round trips grow geometry/texture counts <= 5%
-- [ ] M10 Feel and polish
-  - [ ] draw calls within budget at busy moment per scene
-  - [ ] every UI screen at 1280x720 and 1920x1080, no overflow/overlap
-  - [ ] injected gamepad completes a bridge conversation and a kill
-  - [ ] tuning panel changes game live
+- [x] M9 Closing the loop
+  - [x] full-loop both orders checks debrief variant per lookout choice
+  - [x] save/continue restores mid-game state
+  - [x] five scene round trips grow geometry/texture counts <= 5%
+- [x] M10 Feel and polish
+  - [x] draw calls within budget at busy moment per scene
+  - [x] every UI screen at 1280x720 and 1920x1080, no overflow/overlap
+  - [x] injected gamepad completes a bridge conversation and a kill
+  - [x] tuning panel changes game live
 - [ ] M11 Final verification and handoff
   - [ ] definition of done (spec section 13)

@@ -3,11 +3,17 @@ import { buildEnemyVisual, type EnemyVisual } from '../world/models/enemyModels'
 import type { Director } from './director';
 import { AI, SPITTER, FOREMAN } from '../data/enemies';
 import { h } from '../ui/screens';
+import { optimizeModel, bakeSingleMesh } from '../world/models/optimize';
+
+const LOD_DIST = 18;
 
 /** Visuals for enemies, projectiles, hazards and pickups, synced from the director each frame. */
 export class EnemyViews {
   readonly group = new THREE.Group();
   private views = new Map<number, EnemyVisual>();
+  /** Distant level of detail: one baked mesh per enemy type, shared geometry per type. */
+  private lods = new Map<number, THREE.Mesh>();
+  private lodGeo = new Map<string, THREE.Mesh>();
   private laser: THREE.LineSegments;
   private laserPos = new Float32Array(12 * 6);
   private lobMesh: THREE.InstancedMesh;
@@ -49,10 +55,37 @@ export class EnemyViews {
       let v = this.views.get(e.uid);
       if (!v) {
         v = buildEnemyVisual(e.type);
+        optimizeModel(v.root);
+        // Only the largest few parts cast shadows: enough to ground the model, cheap on draw calls.
+        const meshes: THREE.Mesh[] = [];
+        v.root.traverse((o) => (o as THREE.Mesh).isMesh && meshes.push(o as THREE.Mesh));
+        meshes.forEach((m) => m.geometry.computeBoundingSphere());
+        meshes.sort((a, b) => (b.geometry.boundingSphere?.radius ?? 0) - (a.geometry.boundingSphere?.radius ?? 0));
+        meshes.forEach((m, i) => (m.castShadow = i < (e.def.boss ? 4 : 2)));
         this.views.set(e.uid, v);
         this.group.add(v.root);
       }
       v.root.position.lerpVectors(e.prevPos, e.pos, alpha);
+      // Swap to the baked single mesh when far from the camera.
+      const far = e.alive && camera.position.distanceTo(v.root.position) > LOD_DIST;
+      let lod = this.lods.get(e.uid);
+      if (far && !lod) {
+        let proto = this.lodGeo.get(e.type);
+        if (!proto) {
+          proto = bakeSingleMesh(v.root.clone(true));
+          this.lodGeo.set(e.type, proto);
+        }
+        lod = new THREE.Mesh(proto.geometry, proto.material);
+        lod.castShadow = true;
+        this.lods.set(e.uid, lod);
+        this.group.add(lod);
+      }
+      if (lod) {
+        lod.visible = far;
+        lod.position.copy(v.root.position);
+        lod.rotation.y = v.root.rotation.y;
+      }
+      v.root.visible = !far;
       let dy = e.yaw - e.prevYaw;
       while (dy > Math.PI) dy -= Math.PI * 2;
       while (dy < -Math.PI) dy += Math.PI * 2;
@@ -79,6 +112,11 @@ export class EnemyViews {
     this.laserPos.fill(0, li * 6);
     this.laser.geometry.setDrawRange(0, li * 2);
     this.laser.geometry.attributes.position.needsUpdate = true;
+    for (const [uid, l] of this.lods) {
+      if (seen.has(uid)) continue;
+      this.group.remove(l);
+      this.lods.delete(uid);
+    }
     for (const [uid, v] of this.views) {
       if (seen.has(uid)) continue;
       this.group.remove(v.root);
@@ -145,6 +183,10 @@ export class EnemyViews {
     }
   }
   dispose(): void {
+    for (const p of this.lodGeo.values()) {
+      p.geometry.dispose();
+      (p.material as THREE.Material).dispose();
+    }
     for (const l of this.labels.values()) l.remove();
     this.labels.clear();
   }

@@ -3,6 +3,7 @@ import type { NodeDef } from '../data/layouts';
 import { NAMES } from '../data/names';
 import { HARVEST } from '../data/tuning';
 import { mat, glow } from './materials';
+import { optimizeModel } from './models/optimize';
 
 export const NODE_COLORS = { alloy: 0x8fa8c8, biomass: 0xb8d65a, isotopes: 0xc48cff };
 
@@ -44,10 +45,8 @@ export function buildNodeView(n: NodeDef): THREE.Group {
       g.add(m);
     }
   }
-  const light = new THREE.PointLight(c, 1.5, 5, 2);
-  light.position.y = 0.8;
-  g.add(light);
   g.name = n.id;
+  optimizeModel(g, { shadow: () => false });
   return g;
 }
 
@@ -96,6 +95,8 @@ export function buildCrate(): THREE.Group {
   lamp.position.set(0.4, 0.72, 0);
   lamp.name = 'lamp';
   g.add(lamp);
+  optimizeModel(g, { shadow: () => false });
+  body.castShadow = true;
   return g;
 }
 export function setCrateUnlocked(g: THREE.Group, on: boolean): void {

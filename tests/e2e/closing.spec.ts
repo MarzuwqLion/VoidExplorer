@@ -62,7 +62,7 @@ test('intro card, pause, settings and controls menus work', async ({ page }) => 
   await page.getByText('Controls').click();
   await expect(page.getByText('Keyboard and mouse')).toBeVisible();
   await shot(page, 'M9/controls.png');
-  await page.getByText('Back').click();
+  await page.getByText('Back', { exact: true }).click();
   await page.getByText('Settings').click();
   await expect(page.getByText('Mouse sensitivity')).toBeVisible();
   await shot(page, 'M9/settings.png');

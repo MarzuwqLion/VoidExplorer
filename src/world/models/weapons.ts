@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mat, glow, box, cyl } from '../materials';
 import type { WeaponId } from '../../data/names';
+import { optimizeModel } from './optimize';
 
 /** Weapon models. Muzzle points -Z; the "muzzle" child marks the barrel tip. */
 export function buildWeapon(id: WeaponId): THREE.Group {
@@ -48,6 +49,7 @@ export function buildWeapon(id: WeaponId): THREE.Group {
   }
   g.add(muzzle);
   g.scale.setScalar(1.25);
+  optimizeModel(g);
   g.traverse((o) => ((o as THREE.Mesh).castShadow = true));
   return g;
 }

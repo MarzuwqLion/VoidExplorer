@@ -80,7 +80,7 @@ for (const [w, h] of [[1280, 720], [1920, 1080]]) {
     await page.getByText('Controls').click();
     await checkLayout(page, 'controls');
     await shot(page, 'M10/' + tag + '-controls.png');
-    await page.getByText('Back').click();
+    await page.getByText('Back', { exact: true }).click();
     await page.getByText('Settings').click();
     await checkLayout(page, 'settings');
     await shot(page, 'M10/' + tag + '-settings.png');
@@ -115,7 +115,7 @@ for (const [w, h] of [[1280, 720], [1920, 1080]]) {
     await gotoScene(page, 'systemMap', { fromBridge: true });
     await page.evaluate(() => (window as any).__game.teleportShipTo('vesper'));
     await step(page, 0.5);
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(1200);
     await checkLayout(page, 'map');
     await shot(page, 'M10/' + tag + '-map.png');
     await gotoScene(page, 'planet', { planet: 'korr' });
@@ -155,11 +155,13 @@ test('injected gamepad completes a bridge conversation and a kill', async ({ pag
   await boot(page);
   await page.evaluate(() => localStorage.clear());
   await gotoScene(page, 'bridge');
-  // Walk toward the XO with the left stick.
-  await page.evaluate(() => ((window as any).__pad.axes = [0.15, -1, 0, 0]));
-  await step(page, 3.5);
-  await page.evaluate(() => ((window as any).__pad.axes = [0, 0, 0, 0]));
+  // Start a few metres from the XO and walk up to her with the left stick.
+  await page.evaluate(() => (window as any).__game.teleport(1.8, 0.05, 2.5));
   await step(page, 0.2);
+  await page.evaluate(() => ((window as any).__pad.axes = [0, -1, 0, 0]));
+  await step(page, 1.1);
+  await page.evaluate(() => ((window as any).__pad.axes = [0, 0, 0, 0]));
+  await step(page, 0.3);
   expect(await page.evaluate(() => (window as any).__game.input.device())).toBe('pad');
   const focus = await page.evaluate(() => (window as any).__game.info().focus);
   expect(focus).toBe('talk-xo');
@@ -182,29 +184,33 @@ test('injected gamepad completes a bridge conversation and a kill', async ({ pag
   await page.evaluate(() => (window as any).__game.god(true));
   await page.evaluate(() => (window as any).__game.teleport(-30, 0.05, 30));
   await step(page, 0.3);
-  await page.evaluate(() => (window as any).__game.spawn('stalker', 1));
+  await page.evaluate(() => (window as any).__game.spawn('spitter', 1));
   const before = await page.evaluate(() => (window as any).__game.state().stats.kills);
   await page.evaluate(() => ((window as any).__pad.buttons[6] = { pressed: true, touched: true, value: 1 }));
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 200; i++) {
     const kills = await page.evaluate(() => (window as any).__game.state().stats.kills);
     if (kills > before) break;
     // Steer the right stick toward the nearest enemy.
-    await page.evaluate(() => {
+    await page.evaluate((pulse) => {
       const g = (window as any).__game;
       const sc = g.game.scene;
       const e = sc.director.enemies.find((x: any) => x.alive);
       const pad = (window as any).__pad;
       if (!e) return;
       const cam = sc.world.cam;
-      const dx = e.pos.x - cam.pos.x, dy = e.pos.y + 0.5 - cam.pos.y, dz = e.pos.z - cam.pos.z;
+      const dx = e.pos.x - cam.pos.x, dy = e.pos.y + 0.85 - cam.pos.y, dz = e.pos.z - cam.pos.z;
       let dyaw = (Math.atan2(-dx, -dz) * 180) / Math.PI - cam.yaw;
       while (dyaw > 180) dyaw -= 360;
       while (dyaw < -180) dyaw += 360;
       const dp = (Math.atan2(dy, Math.hypot(dx, dz)) * 180) / Math.PI - cam.pitch;
-      pad.axes = [0, 0, Math.max(-1, Math.min(1, -dyaw / 20)), Math.max(-1, Math.min(1, -dp / 15))];
-      pad.buttons[7] = { pressed: Math.abs(dyaw) < 3, touched: true, value: Math.abs(dyaw) < 3 ? 1 : 0 };
-    });
-    await step(page, 0.1);
+      const sx = Math.abs(dyaw) < 1 ? 0 : Math.sign(-dyaw) * Math.min(1, 0.3 + Math.abs(dyaw) / 25);
+      const sy = Math.abs(dp) < 1 ? 0 : Math.sign(-dp) * Math.min(1, 0.3 + Math.abs(dp) / 20);
+      pad.axes = [0, 0, sx, sy];
+      // Semi-auto rifle: pulse the trigger so every pull is a fresh press.
+      const onTarget = Math.abs(dyaw) < 5 && Math.abs(dp) < 5 && pulse;
+      pad.buttons[7] = { pressed: onTarget, touched: true, value: onTarget ? 1 : 0 };
+    }, i % 2 === 0);
+    await step(page, 0.05);
   }
   const kills = await page.evaluate(() => (window as any).__game.state().stats.kills);
   expect(kills).toBeGreaterThan(before);
