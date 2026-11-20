@@ -16,7 +16,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "types": [
-      "vite/client"
+      "vite/client",
+      "node"
     ],
     "noEmit": true,
     "useDefineForClassFields": true
