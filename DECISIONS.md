@@ -10,3 +10,7 @@ Format: what — why — how to reverse.
 - Rapier's built-in autostep did not climb 0.3 m steps in this setup, so the controller does its own step-up (probe ahead for a walkable ledge no higher than 0.35 m and lift onto it). — Reverse: re-enable cc.enableAutostep in src/player/controller.ts.
 - After a move, velocity is projected off wall normals reported by the character controller instead of clamped per axis (the clamp bled speed on small corrections). — Reverse: src/player/controller.ts.
 - On the bridge, Shift jogs (walk is the default); on planets jog is the default, light stick tilt walks and Shift is the roadie run. — Reverse: PlayerController target speed selection.
+- Raider aim error is a uniform cone of 1.9 degrees plus 0.22 degrees per m/s of commander speed: measured 60% hits at 20 m standing still and about 35% while jogging (unit test). — Reverse: AI.aimErrorBase/aimErrorPerSpeed in src/data/enemies.ts.
+- Riflemen only use low cover (1.0 to 1.4 m) so they can pop up and fire over it; tall cover is used by the commander and other enemies. — Reverse: lowOnly in src/ai/brains.ts.
+- While grounded the controller sends no vertical input (snap-to-ground follows slopes); Rapier trimmed horizontal motion on ordinary floor contacts otherwise. — Reverse: src/player/controller.ts.
+- Enemy models were built by a subagent in src/world/models/enemyModels.ts and creature.ts; the foreman uses 56 meshes, above the 40 guideline, still within the draw-call budget. — Reverse: simplify the foreman model.

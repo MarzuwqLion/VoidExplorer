@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: M4 Enemies — nav-grid agents, perception, cover points, attack tokens, 5 standard enemy brains, encounter director, sims.
+Next up: M5 Bridge and crew — dialogue graph test, crew e2e (talk to each + buy upgrade), bridge + dialogue camera screenshots. Most bridge code exists from M1.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -17,11 +17,11 @@ Next up: M4 Enemies — nav-grid agents, perception, cover points, attack tokens
   - [x] unit tests: shots-to-kill and falloff
   - [x] scripted test kills a dummy with each weapon
   - [x] HUD screenshot reviewed
-- [ ] M4 Enemies
-  - [ ] each enemy type paths to player or cover; riflemen reach cover points
-  - [ ] stationary player vs five riflemen dies in 5-15 s
-  - [ ] hold-fire stand-in kills one of each type in expected shots
-  - [ ] 5-minute sim: no NaN, no entities outside level
+- [x] M4 Enemies
+  - [x] each enemy type paths to player or cover; riflemen reach cover points
+  - [x] stationary player vs five riflemen dies in 5-15 s
+  - [x] hold-fire stand-in kills one of each type in expected shots
+  - [x] 5-minute sim: no NaN, no entities outside level
 - [ ] M5 Bridge and crew
   - [ ] dialogue graph test passes
   - [ ] e2e talks to each crew member and buys an upgrade

@@ -301,9 +301,10 @@ export class PlayerController {
     this.lean += Math.max(-leanRate, Math.min(leanRate, leanTarget - this.lean));
 
     // Gravity and collision.
-    if (this.grounded && this.vy < 0) this.vy = -2;
-    this.vy += SIM.gravity * dt;
-    const desired = { x: this.vel.x * dt, y: this.vy * dt, z: this.vel.z * dt };
+    // Grounded: no vertical input (snap-to-ground follows slopes); airborne: gravity.
+    if (this.grounded && this.vy <= 0) this.vy = 0;
+    else this.vy += SIM.gravity * dt;
+    const desired = { x: this.vel.x * dt, y: this.grounded && this.vy <= 0 ? -0.002 : this.vy * dt, z: this.vel.z * dt };
     this.cc.computeColliderMovement(this.collider, desired, undefined, Q_STATIC);
     const mv = this.cc.computedMovement();
     this.grounded = this.cc.computedGrounded();

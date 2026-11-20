@@ -2,6 +2,7 @@ import type * as THREE from 'three';
 import type { V3 } from '../world/physics';
 
 export type HitPart = 'body' | 'head' | 'weak' | 'sink';
+export type EnemyAnimState = 'idle' | 'move' | 'telegraph' | 'attack' | 'recover' | 'flinch' | 'stagger' | 'stunned' | 'cover' | 'dead';
 export interface Hitbox {
   kind: 'sphere' | 'capsule';
   part: HitPart;

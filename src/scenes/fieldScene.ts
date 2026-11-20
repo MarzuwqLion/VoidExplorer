@@ -9,11 +9,19 @@ import { FEEL } from '../data/tuning';
 import type { PlayerCmd } from '../player/controller';
 import type { Damageable } from '../ai/types';
 import type { SoundId } from '../data/sounds';
+import { Director } from '../ai/director';
+import { EnemyViews } from '../ai/enemyViews';
+import { DebugOverlay } from '../debug/overlay';
+import type { EnemyType } from '../data/names';
+import { WEAPONS as WDEFS } from '../data/weapons';
 
 /** A walk scene with combat: gym and planets. */
 export abstract class FieldScene extends WalkScene {
   combat!: Combat;
   fx!: Fx;
+  director!: Director;
+  enemyViews!: EnemyViews;
+  overlay!: DebugOverlay;
   protected recoil = 0;
   protected hitReact = 0;
   harvestPose = 0;
@@ -49,7 +57,6 @@ export abstract class FieldScene extends WalkScene {
     c.events.on('hit', (e) => {
       this.hud.hitMarker(e.kind);
       g.audio.play(e.kind === 'kill' ? 'killmarker' : e.kind === 'head' ? 'headshot' : 'hitmarker');
-      if (e.kind === 'kill') this.onKill(e.target);
     });
     c.events.on('playerHit', (e) => {
       const p = world.player.pos;
@@ -65,6 +72,35 @@ export abstract class FieldScene extends WalkScene {
     c.events.on('death', () => this.hud.setDeath(true));
     c.onRespawn = () => this.respawn();
     this.combat.god = g.debug.god;
+    const d = (this.director = new Director(world, c, rng));
+    this.enemyViews = new EnemyViews(d, g.ui.world);
+    this.three.add(this.enemyViews.group);
+    this.overlay = new DebugOverlay(world, () => d.cover);
+    this.three.add(this.overlay.group);
+    this.onExit(() => this.enemyViews.dispose());
+    d.events.on('sound', (e) => this.playAt(e.id, e.pos));
+    d.events.on('splash', (p) => this.fx.burst(p, 24, 0x9aff40, 5, 0.6, -8, 1));
+    d.events.on('blast', (p) => {
+      this.fx.burst(p, 40, 0xffa040, 9, 0.7, -10, 1.2);
+      if (g.settings.shake) world.cam.addShake(0.4);
+    });
+    d.events.on('pickup', (k) => {
+      g.ui.toast('+' + k.amount + ' ' + WDEFS[k.kind].name + ' rounds');
+      g.audio.play('pickup');
+    });
+    d.events.on('kill', (e) => {
+      g.state.data.stats.kills++;
+      this.onKill(e);
+    });
+    this.api.killAll = () => d.killAll();
+    this.api.spawn = (type, n) => {
+      const p = world.player.pos;
+      const f = world.cam.forward();
+      for (let i = 0; i < n; i++) {
+        const a = Math.atan2(f.z, f.x) + (i - (n - 1) / 2) * 0.35;
+        d.spawn(type as EnemyType, p.x + Math.cos(a) * 18, p.z + Math.sin(a) * 18, { alerted: true });
+      }
+    };
   }
 
   /** Stereo pan and distance attenuation from the camera. */
@@ -88,6 +124,7 @@ export abstract class FieldScene extends WalkScene {
     w.cam.yaw = this.checkpointYaw;
     w.physics.step();
     this.hud.setDeath(false);
+    this.director.resetActive();
     this.onRespawned();
   }
   protected onRespawned(): void {}
@@ -110,6 +147,9 @@ export abstract class FieldScene extends WalkScene {
   protected postStep(dt: number): void {
     const c = this.combat;
     c.postStep(dt);
+    this.director.update(dt);
+    const alerted = this.director.enemies.some((e) => e.alive && e.alerted);
+    this.game.audio.setTension(alerted ? Math.min(1, 0.4 + this.director.activeCount() * 0.1) : 0);
     this.recoil = Math.max(0, this.recoil - dt * 10);
     this.hitReact = Math.max(0, this.hitReact - dt * 4);
     const ws = c.weapons;
@@ -158,5 +198,7 @@ export abstract class FieldScene extends WalkScene {
   render(alpha: number, frameDt: number): void {
     super.render(alpha, frameDt);
     this.fx.update(frameDt);
+    this.enemyViews.update(frameDt, alpha, this.game.debug.aiLabels, this.camera);
+    this.overlay.update(this.game.debug.showNav, this.game.debug.showColliders);
   }
 }
