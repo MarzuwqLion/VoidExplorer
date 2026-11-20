@@ -22,7 +22,7 @@ export class TitleScene extends Scene {
     const g = this.game;
     this.three.background = new THREE.Color(0x02040a);
     this.three.add(makeStarfield(2500, 1500));
-    const star = makeStar(60);
+    const star = makeStar(60, undefined, { spriteCore: true });
     star.position.set(-560, 260, -700);
     this.three.add(star);
     this.three.add(new THREE.AmbientLight(0x6070a0, 0.6));

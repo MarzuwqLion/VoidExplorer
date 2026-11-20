@@ -8,6 +8,7 @@ import { DialogueView } from '../ui/dialogueView';
 import type { DGraph, Effect } from '../data/dialogue/types';
 import type { Npc } from '../world/npc';
 import type { PlayerCmd } from '../player/controller';
+import { CameraRig } from '../player/camera';
 
 /** Shared base for scenes where the commander walks: bridge, planets, test gym. */
 export abstract class WalkScene extends Scene {
@@ -54,6 +55,7 @@ export abstract class WalkScene extends Scene {
       this.handleEffect(e);
     });
     if (runner.done) return onDone();
+    this.dialogue?.destroy();
     this.dialogue = new DialogueView(g.ui.overlay, runner, (a) => g.input.glyph(a));
     this.dialogue.onTick = () => g.audio.play('type_tick');
     this.world.locked = true;
@@ -63,10 +65,8 @@ export abstract class WalkScene extends Scene {
       npc.faceToward(this.world.player.pos);
       const head = npc.head();
       const me = this.world.head();
-      const dir = me.clone().sub(head).setY(0).normalize();
-      const right = new THREE.Vector3(-dir.z, 0, dir.x);
-      const camPos = me.clone().addScaledVector(dir, 0.9).addScaledVector(right, 0.55).add(new THREE.Vector3(0, 0.1, 0));
-      this.world.cam.setDialogue(camPos, head.clone().add(new THREE.Vector3(0, -0.05, 0)));
+      const shot = CameraRig.dialogueShot(me, head, this.world.physics);
+      this.world.cam.setDialogue(shot.pos, shot.look);
       // Face the commander toward the speaker.
       this.world.player.facing = Math.atan2(-(head.x - me.x), -(head.z - me.z));
     }
@@ -111,7 +111,7 @@ export abstract class WalkScene extends Scene {
     const o = this.objective();
     const p = this.world.player.pos;
     const dist = o.target ? Math.hypot(o.target.x - p.x, o.target.z - p.z) : undefined;
-    this.hud.setObjective(o.text, this.hudMode === 'planet' ? dist : undefined);
+    if (this.hud.setObjective(o.text, this.hudMode === 'planet' ? dist : undefined)) this.game.audio.play('objective');
     const f = this.world.focus;
     this.hud.setPrompt(f && !this.dialogue ? f.label : null, input.glyph('interact'), f?.hold ? this.world.holdT / f.hold : 0);
     if (input.pressed('objectives')) this.logOpen = !this.logOpen;

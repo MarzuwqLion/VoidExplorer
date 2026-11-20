@@ -9,6 +9,7 @@ import { MAP_RADIO } from '../data/dialogue/radio';
 import { buildPlanetMesh } from '../world/planetMesh';
 import { buildShip, buildShuttle } from '../world/models/ship';
 import { makeStarfield, makeStar } from '../world/space';
+import { ShipTrail } from '../world/shipTrail';
 import { rockGeometry } from '../world/levelView';
 import { SurveyPanel, planetPanelData, ensureMapCss, type PanelData } from '../ui/surveyPanel';
 import { h } from '../ui/screens';
@@ -23,7 +24,7 @@ export class SystemMapScene extends Scene {
   private planets = new Map<string, THREE.Group>();
   private ship = buildShip();
   private shuttle = buildShuttle();
-  private trail!: THREE.Mesh;
+  private trail = new ShipTrail();
   private zoom = MAP.zoomStart;
   private panel!: SurveyPanel;
   private hudEl!: HTMLElement;
@@ -92,10 +93,7 @@ export class SystemMapScene extends Scene {
     this.three.add(this.belt);
     this.ship.scale.setScalar(MAP.shipScale);
     this.three.add(this.ship);
-    this.trail = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0x8fd0ff, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }));
-    this.trail.rotation.x = -Math.PI / 2;
-    this.ship.add(this.trail);
-    this.trail.scale.set(20, 20, 20);
+    this.three.add(this.trail.points);
     this.shuttle.scale.setScalar(0.12);
     this.shuttle.visible = false;
     this.three.add(this.shuttle);
@@ -306,6 +304,9 @@ export class SystemMapScene extends Scene {
       const m = this.planets.get(p.id)!;
       const q = s.planetPos(p);
       m.position.set(q.x, q.y, q.z);
+      // Keep distant planets readable: never smaller than a minimum on-screen size.
+      const camDist = this.camera.position.distanceTo(m.position) || 1;
+      m.scale.setScalar(Math.min(MAP.planetMaxInflate, Math.max(1, (MAP.planetMinAngle * camDist) / p.size)));
       const surf = m.getObjectByName('surface');
       if (surf) surf.rotation.y += dt * 0.15;
       const mk = m.getObjectByName('marker');
@@ -314,10 +315,7 @@ export class SystemMapScene extends Scene {
     this.belt.rotation.y += dt * 0.002;
     this.ship.position.set(s.x, 0, s.z);
     this.ship.rotation.y = s.heading;
-    const sp = s.speed / MAP.boost;
-    this.trail.visible = sp > 0.05;
-    this.trail.scale.set(18, 20 + sp * 90, 18);
-    this.trail.position.set(0, 0, 70 + sp * 45);
+    this.trail.update(dt, this.ship, this.phase === 'fly' ? Math.min(1, s.speed / MAP.cruise) : 0);
     // Camera.
     let target = new THREE.Vector3(s.x, 0, s.z);
     let zoom = this.zoom;

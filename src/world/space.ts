@@ -40,14 +40,42 @@ export function glowTexture(inner: string, outer: string, size = 128): THREE.Tex
   return t;
 }
 
-/** An emissive star with a corona sprite. */
-export function makeStar(radius: number, color = 0xffa040): THREE.Group {
+/** A hard-edged, limb-darkened star disc drawn on a canvas. */
+function discTexture(size = 128): THREE.Texture {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d')!;
+  const r = size / 2;
+  const grd = g.createRadialGradient(r, r, 0, r, r, r);
+  grd.addColorStop(0, 'rgba(255,248,225,1)');
+  grd.addColorStop(0.6, 'rgba(255,214,150,1)');
+  grd.addColorStop(0.88, 'rgba(255,165,75,1)');
+  grd.addColorStop(1, 'rgba(255,130,40,0)');
+  g.fillStyle = grd;
+  g.fillRect(0, 0, size, size);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+/**
+ * An emissive star with a corona sprite. A backdrop star seen far off-axis should use a sprite core:
+ * a sphere there projects as a stretched ellipse that drifts off the round corona.
+ */
+export function makeStar(radius: number, color = 0xffa040, opts: { spriteCore?: boolean } = {}): THREE.Group {
   const grp = new THREE.Group();
-  const core = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(radius, 4),
-    new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(1.6) }),
-  );
-  grp.add(core);
+  if (opts.spriteCore && typeof document !== 'undefined') {
+    const core = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTexture(), depthWrite: false, transparent: true, fog: false }));
+    core.scale.setScalar(radius * 2.3);
+    core.renderOrder = 1;
+    grp.add(core);
+  } else {
+    const core = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(radius, 4),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(1.6) }),
+    );
+    grp.add(core);
+  }
   const tex = glowTexture('rgba(255,200,120,0.9)', 'rgba(255,120,30,0)');
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
   sp.scale.setScalar(radius * 5.5);

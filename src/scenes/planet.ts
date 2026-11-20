@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Snow } from '../world/snow';
 import { FieldScene } from './fieldScene';
 import { WalkWorld, type Interactable } from '../world/walkWorld';
 import { buildLevelView } from '../world/levelView';
@@ -7,7 +8,7 @@ import { buildSky, skyPlanet } from '../world/sky';
 import { buildShuttle } from '../world/models/ship';
 import { NAMES, speakerName, type MissionPlanet, type ResourceId } from '../data/names';
 import { PLANET_BY_ID } from '../data/planets';
-import { BOUNDARY, HARVEST } from '../data/tuning';
+import { BOUNDARY, HARVEST, SNOW_ROOF } from '../data/tuning';
 import type { Mission, PlanetLevel } from '../missions/types';
 import { createPlanet } from '../missions/registry';
 import type { NodeDef, XZ } from '../data/layouts';
@@ -40,7 +41,7 @@ export class PlanetScene extends FieldScene {
   private crates = new Map<string, { view: THREE.Group; unlocked: boolean }>();
   private beam = new ScanBeam();
   private beacon: THREE.Mesh | null = null;
-  private snow: THREE.Points | null = null;
+  private snow: Snow | null = null;
   private lamp: THREE.PointLight | null = null;
   boss: Enemy | null = null;
   bossName = '';
@@ -84,8 +85,18 @@ export class PlanetScene extends FieldScene {
     this.three.add(this.sun, this.sun.target);
     this.camera.far = 1200;
     this.three.add(this.beam.mesh);
+    for (const l of level.lamps ?? []) {
+      const lamp = new THREE.PointLight(l.color, l.intensity, l.range, 1.6);
+      lamp.position.set(l.x, l.y, l.z);
+      this.three.add(lamp);
+    }
     if (level.weather === 'snow') {
-      this.addSnow();
+      const nav = world.nav, terrain = level.terrain;
+      const overhead = level.prims.flatMap((p) =>
+        p.kind === 'box' && p.solid === false && (p.y ?? 0) >= SNOW_ROOF.minHeight && p.w * p.d >= SNOW_ROOF.minArea ? [{ x: p.x, z: p.z, hw: p.w / 2, hd: p.d / 2, rotY: p.rotY ?? 0, y: p.y ?? 0 }] : [],
+      );
+      this.snow = new Snow(world.physics, (x, z) => Math.max(terrain.height(x, z), nav.heightAt(x, z)), overhead);
+      this.three.add(this.snow.points);
       // Suit lamp for the dusk interiors.
       this.lamp = new THREE.PointLight(0xdce8ff, 5, 12, 1.8);
       this.three.add(this.lamp);
@@ -364,17 +375,6 @@ export class PlanetScene extends FieldScene {
     (this.mission as { onRespawn?: () => void }).onRespawn?.();
   }
 
-  private addSnow(): void {
-    const n = 1500;
-    const pos = new Float32Array(n * 3);
-    for (let i = 0; i < n; i++) pos.set([(Math.random() - 0.5) * 60, Math.random() * 25, (Math.random() - 0.5) * 60], i * 3);
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    this.snow = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xe8f0ff, size: 0.035, transparent: true, opacity: 0.75, depthWrite: false }));
-    this.snow.frustumCulled = false;
-    this.three.add(this.snow);
-  }
-
   render(alpha: number, frameDt: number): void {
     super.render(alpha, frameDt);
     const p = this.commander.root.position;
@@ -384,18 +384,7 @@ export class PlanetScene extends FieldScene {
     for (const n of this.nodes.values()) if (!n.done) n.view.rotation.y += frameDt * 0.4;
     if (this.lamp) this.lamp.position.set(p.x, p.y + 2.2, p.z).addScaledVector(this.world.cam.forward(), 1.5);
     if (this.beacon) (this.beacon.material as THREE.MeshBasicMaterial).opacity = 0.35 + Math.sin(this.t * 3) * 0.1;
-    if (this.snow) {
-      this.snow.position.set(p.x, p.y - 5, p.z);
-      const a = this.snow.geometry.attributes.position as THREE.BufferAttribute;
-      for (let i = 0; i < a.count; i++) {
-        let y = a.getY(i) - frameDt * 2.2;
-        if (y < 0) y += 25;
-        a.setY(i, y);
-        a.setX(i, a.getX(i) + frameDt * 1.2);
-        if (a.getX(i) > 30) a.setX(i, a.getX(i) - 60);
-      }
-      a.needsUpdate = true;
-    }
+    this.snow?.update(frameDt, p);
   }
 
   /** Top-down layout map rendered to a data URL (no WebGL needed). */

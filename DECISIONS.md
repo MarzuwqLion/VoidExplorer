@@ -28,3 +28,15 @@ Format: what — why — how to reverse.
 - Korr gets a soft suit lamp following the commander so the dusk interiors stay readable. — Reverse: PlanetScene.enter.
 - Lights are disposed with their scene (shadow maps), which removed a texture leak across scene changes. — Reverse: disposeObject in src/scenes/scene.ts.
 - A NaN-guard pass runs before bloom so a single non-finite pixel cannot black out the frame. — Reverse: NAN_GUARD in src/core/game.ts.
+- M12 polish pass added after M11 at the owner's request ("evaluate the game and polish everything"); its gate list is in PLAN.md. — Reverse: n/a.
+- optimizeModel keeps existing vertex colours when a model is optimised twice (raiders were built through buildHumanoid, which already optimises, then optimised again by EnemyViews, flattening them to white). — Reverse: src/world/models/optimize.ts mergeMeshes.
+- The dialogue camera is solved by angle: it sits behind and beside the commander's head on whichever shoulder has a clear sphere-cast and line of sight, then aims so the speaker sits 7 degrees off centre and the commander stays inside 26 degrees. — Reverse: DIALOGUE_CAM in src/data/tuning.ts and CameraRig.dialogueShot.
+- The commander spawns 1.9 m in from the aft door (spec says at the door) so the shoulder camera starts at full distance instead of jammed against the wall. — Reverse: BRIDGE.spawnInset = 0.
+- Backdrop stars on the title, bridge viewport and end screen use a round sprite core; a sphere far off-axis projected as an ellipse that drifted off its corona. The system map sun is still a sphere. — Reverse: makeStar spriteCore option.
+- System map planets are drawn at least 0.018 rad on screen (up to 4x true size) so the zoomed-out view reads as a map; simulation and approach ranges use true sizes. Default zoom moved from 120 to 75 so the ship reads at start; all labels show above zoom 220. — Reverse: MAP.planetMinAngle, planetMaxInflate, zoomStart, zoomLabels.
+- Snow is hidden under roofs: each 1 m cell is probed once with an upward ray from the walkable floor, and visual-only slabs at least 2.5 m up and 4 m2 count as roofs. — Reverse: src/world/snow.ts, SNOW_ROOF.
+- Korr gets four warm work lights in the hall, corridor and office. — Reverse: KORR.lamps = [].
+- Bridge set dressing (wall ribs, ceiling beams, floor seams, kick plates, console lights) is visual-only and shares the instanced box materials, so draw calls fell (178 at spawn). Ceiling light panels were dimmed so they stop blooming out. — Reverse: dressing() in src/world/bridgeLayout.ts, LIGHT colour.
+- HUD vitals are labelled bars with values, a lagging damage ghost, a shield-break flash and medkit pips; ammo turns amber when low and red when empty; a new objective slides in with a soft chime. — Reverse: src/ui/hud.ts and hud.css.
+- Enemies flash briefly when hit; acid pools use a textured glowing decal; mortar warnings show a full-radius ring that fills as the shell lands. — Reverse: AI.hitFlash, src/ai/enemyViews.ts.
+- The end screen no longer dims the scene, and the Sojourner departs toward the next star behind the stats. — Reverse: src/scenes/end.ts.

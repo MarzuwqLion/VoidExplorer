@@ -107,9 +107,15 @@ function mergeMeshes(list: THREE.Mesh[], colors: boolean): THREE.BufferGeometry 
       nor.push(n[i]);
     }
     if (colors) {
-      const c = (m.material as THREE.MeshStandardMaterial).color;
+      const mat = m.material as THREE.MeshStandardMaterial;
+      const c = mat.color;
+      // A mesh merged earlier already carries vertex colours: keep them (tinted by its material colour).
+      const vc = mat.vertexColors ? (g.attributes.color as THREE.BufferAttribute | undefined) : undefined;
       // Stored in linear space, matching how material colours are used.
-      for (let i = 0; i < p.length / 3; i++) col.push(c.r, c.g, c.b);
+      for (let i = 0; i < p.length / 3; i++) {
+        if (vc) col.push(vc.getX(i) * c.r, vc.getY(i) * c.g, vc.getZ(i) * c.b);
+        else col.push(c.r, c.g, c.b);
+      }
     }
     g.dispose();
   }

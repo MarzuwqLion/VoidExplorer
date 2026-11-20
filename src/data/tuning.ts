@@ -172,6 +172,16 @@ export const RENDER = { maxPixelRatio: 1.5, shadowMapSize: 2048, maxDrawCalls: 3
 /** Bloom post-processing. */
 export const BLOOM = { strength: 0.45, radius: 0.35, threshold: 0.82 };
 
+/** Over-the-shoulder dialogue shot: distance behind the commander's head and to the side (m), lift (m), where the
+ * speaker sits right of centre (deg), how far left of centre the commander may sit (deg), collision probe radius (m). */
+export const DIALOGUE_CAM = { back: 1.0, side: 0.95, rise: 0.02, speakerDeg: 7, commanderMaxDeg: 26, probe: 0.2, minBack: 0.55 };
+
+/** Snowfall around the commander: flake count, box size and height (m), fall and drift speed (m/s), point size,
+ * how far below the commander the box starts, and the lift above the floor for the roof probe (m). */
+/** Visual-only slabs at least this high (m) and this large (m2) count as roofs that keep snow out. */
+export const SNOW_ROOF = { minHeight: 2.5, minArea: 4 };
+export const SNOW = { count: 1500, box: 60, height: 25, fall: 2.2, drift: 1.2, size: 0.035, below: 5, probeLift: 0.3 };
+
 /** Text typing speed for dialogue (chars per second). */
 export const DIALOGUE = { charsPerSecond: 60 };
 

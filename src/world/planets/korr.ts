@@ -114,5 +114,6 @@ export function korrLevel(): PlanetLevel {
     footstep: 'footstep_snow',
     inside: (x, z) => Math.abs(x) < 108 && Math.abs(z) < 108 && regionDist(x, z) < 3,
     weather: 'snow',
+    lamps: KORR.lamps,
   };
 }

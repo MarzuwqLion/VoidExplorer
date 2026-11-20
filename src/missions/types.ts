@@ -24,6 +24,8 @@ export interface PlanetLevel {
   inside: (x: number, z: number) => boolean;
   /** Snow or dust particles. */
   weather?: 'snow' | 'pollen';
+  /** Fixed work lights (interiors). */
+  lamps?: { x: number; y: number; z: number; color: number; intensity: number; range: number }[];
 }
 
 export interface Objective {

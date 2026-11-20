@@ -18,9 +18,17 @@ export class Hud {
   private prompt: HTMLElement;
   private promptBar: HTMLElement;
   private sh: HTMLElement;
+  private shGhost: HTMLElement;
+  private shRow: HTMLElement;
+  private shVal: HTMLElement;
   private hp: HTMLElement;
+  private hpGhost: HTMLElement;
   private hpBar: HTMLElement;
+  private hpVal: HTMLElement;
   private meta: HTMLElement;
+  private pips: HTMLElement[] = [];
+  private lastShield = -1;
+  private lastBars = '';
   private wName: HTMLElement;
   private wAmmo: HTMLElement;
   private slots: HTMLElement[] = [];
@@ -57,10 +65,19 @@ export class Hud {
     this.prompt = h('div', 'hud-prompt', undefined, this.el);
     this.promptBar = h('div', 'bar');
     const bars = h('div', 'hud-bars planet-only', undefined, this.el);
-    this.sh = h('div', 'fill', undefined, h('div', 'bar sh', undefined, bars));
-    this.hpBar = h('div', 'bar hp', undefined, bars);
-    this.hp = h('div', 'fill', undefined, this.hpBar);
-    this.meta = h('div', 'meta', '', bars);
+    const row = (label: string, cls: string): [HTMLElement, HTMLElement, HTMLElement, HTMLElement, HTMLElement] => {
+      const r = h('div', 'row', undefined, bars);
+      h('span', 'lbl', label, r);
+      const bar = h('div', 'bar ' + cls, undefined, r);
+      const ghost = h('div', 'ghost', undefined, bar);
+      const fill = h('div', 'fill', undefined, bar);
+      const val = h('span', 'val', '', r);
+      return [r, bar, ghost, fill, val];
+    };
+    [this.shRow, , this.shGhost, this.sh, this.shVal] = row('Shield', 'sh');
+    [, this.hpBar, this.hpGhost, this.hp, this.hpVal] = row('Health', 'hp');
+    this.meta = h('div', 'meta', undefined, bars);
+    h('span', 'lbl', 'Medkits', this.meta);
     const w = h('div', 'hud-wpn planet-only', undefined, this.el);
     this.wName = h('div', 'name', '', w);
     this.wAmmo = h('div', 'ammo', '', w);
@@ -91,15 +108,28 @@ export class Hud {
     this.warn = h('div', 'hud-warn', '', this.el);
   }
 
-  setObjective(text: string, dist?: number): void {
+  private objBase = '';
+  /** Sets the objective line. Returns true when the objective itself changed (not just its distance). */
+  setObjective(text: string, dist?: number): boolean {
+    let fresh = false;
+    if (text !== this.objBase) {
+      fresh = this.objBase !== '' && text !== '';
+      this.objBase = text;
+      if (fresh) {
+        this.obj.classList.remove('new');
+        void this.obj.offsetWidth;
+        this.obj.classList.add('new');
+      }
+    }
     const full = text + (dist !== undefined && dist > 3 ? '  ' + Math.round(dist) + ' m' : '');
-    if (full === this.objectiveText) return;
+    if (full === this.objectiveText) return fresh;
     this.objectiveText = full;
     this.obj.innerHTML = '';
     if (text) {
       h('span', 'lbl', 'Objective', this.obj);
       h('span', '', full, this.obj);
     }
+    return fresh;
   }
   setPrompt(text: string | null, key = 'E', hold = 0): void {
     this.promptText = text ?? '';
@@ -127,13 +157,33 @@ export class Hud {
     this.commsT = seconds;
   }
   setBars(shield: number, shieldMax: number, health: number, healthMax: number, medkits: number, medkitMax: number): void {
-    this.sh.style.transform = 'scaleX(' + Math.max(0, shield / shieldMax) + ')';
-    this.hp.style.transform = 'scaleX(' + Math.max(0, health / healthMax) + ')';
+    const sig = [Math.ceil(shield), shieldMax, Math.ceil(health), healthMax, medkits, medkitMax].join('|');
+    if (sig === this.lastBars) return;
+    this.lastBars = sig;
+    const sk = Math.max(0, shield / shieldMax), hk = Math.max(0, health / healthMax);
+    this.sh.style.transform = 'scaleX(' + sk + ')';
+    this.shGhost.style.transform = 'scaleX(' + sk + ')';
+    this.hp.style.transform = 'scaleX(' + hk + ')';
+    this.hpGhost.style.transform = 'scaleX(' + hk + ')';
     this.hpBar.classList.toggle('low', health <= 25);
-    this.meta.textContent = 'Shield ' + Math.ceil(shield) + '   Health ' + Math.ceil(health) + '   Medkits ' + medkits + '/' + medkitMax;
+    this.shVal.textContent = String(Math.ceil(shield));
+    this.hpVal.textContent = String(Math.ceil(health));
+    // Shield break: the row flashes once when the shield is knocked out.
+    if (this.lastShield > 0 && shield <= 0) {
+      this.shRow.classList.remove('broken');
+      void this.shRow.offsetWidth;
+      this.shRow.classList.add('broken');
+    }
+    this.lastShield = shield;
+    while (this.pips.length < medkitMax) this.pips.push(h('i', 'pip', undefined, this.meta));
+    while (this.pips.length > medkitMax) this.pips.pop()!.remove();
+    this.pips.forEach((p, i) => p.classList.toggle('on', i < medkits));
+    this.meta.dataset.text = 'Medkits ' + medkits + '/' + medkitMax;
   }
-  setWeapon(name: string, mag: number, reserve: number | null, active: number, labels: string[]): void {
+  setWeapon(name: string, mag: number, reserve: number | null, active: number, labels: string[], magSize = 0): void {
     this.wName.textContent = name;
+    this.wAmmo.classList.toggle('low', magSize > 0 && mag > 0 && mag <= Math.ceil(magSize * 0.25));
+    this.wAmmo.classList.toggle('empty', magSize > 0 && mag === 0);
     this.wAmmo.innerHTML = String(mag) + ' <small>/ ' + (reserve === null ? INF : reserve) + '</small>';
     this.slots.forEach((s, i) => {
       s.textContent = labels[i] ?? '';

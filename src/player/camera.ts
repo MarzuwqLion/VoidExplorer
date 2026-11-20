@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FEEL, BODY } from '../data/tuning';
+import { FEEL, BODY, DIALOGUE_CAM } from '../data/tuning';
 import type { PhysicsWorld } from '../world/physics';
 import type { PlayerController } from './controller';
 
@@ -37,7 +37,8 @@ export class CameraRig {
   headDist = 3;
   trauma = 0;
   private bobT = 0;
-  private dialogue: { pos: THREE.Vector3; look: THREE.Vector3 } | null = null;
+  /** Current dialogue shot, if any (read by tests). */
+  dialogue: { pos: THREE.Vector3; look: THREE.Vector3 } | null = null;
   private dBlend = 0;
   shakeEnabled = true;
 
@@ -60,6 +61,45 @@ export class CameraRig {
   }
   setDialogue(pos: THREE.Vector3 | null, look?: THREE.Vector3): void {
     this.dialogue = pos && look ? { pos: pos.clone(), look: look.clone() } : null;
+  }
+  /**
+   * Over-the-shoulder shot from behind the commander's head toward the speaker. Tries the right shoulder first,
+   * then the left, sphere-casting so the camera never ends up inside a wall; pulls in if both sides are tight.
+   */
+  static dialogueShot(me: THREE.Vector3, them: THREE.Vector3, physics: PhysicsWorld): { pos: THREE.Vector3; look: THREE.Vector3 } {
+    const D = DIALOGUE_CAM;
+    const fwd = them.clone().sub(me).setY(0);
+    if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1);
+    fwd.normalize();
+    const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+    let best = { pos: me.clone(), side: 1, clear: -1 };
+    for (const side of [1, -1]) {
+      const want = me.clone().addScaledVector(fwd, -D.back).addScaledVector(right, D.side * side).add(new THREE.Vector3(0, D.rise, 0));
+      const dir = want.clone().sub(me);
+      const len = dir.length();
+      dir.normalize();
+      const toi = physics.sphereCast(me, dir, D.probe, len);
+      const dist = toi === null ? len : Math.max(0.05, toi - 0.02);
+      const pos = me.clone().addScaledVector(dir, dist);
+      // The shot also needs a clear line to the speaker's face.
+      const sees = physics.clear(pos, them);
+      const clear = dist / len + (sees ? 1 : 0);
+      if (clear > best.clear + 1e-3) best = { pos, side, clear };
+      if (dist >= len - 1e-3 && sees) break;
+    }
+    if (best.pos.distanceTo(me) < D.minBack) best.pos.y += 0.15;
+    // Aim so the speaker sits just off centre, away from the commander, and the commander stays in frame.
+    const flat = (v: THREE.Vector3) => Math.atan2(-(v.x - best.pos.x), -(v.z - best.pos.z));
+    const toThem = flat(them), toMe = flat(me);
+    let rel = toMe - toThem;
+    while (rel > Math.PI) rel -= Math.PI * 2;
+    while (rel < -Math.PI) rel += Math.PI * 2;
+    const sgn = Math.sign(rel) || 1;
+    let yaw = toThem + sgn * D.speakerDeg * DEG;
+    if (Math.abs(rel) - D.speakerDeg * DEG > D.commanderMaxDeg * DEG) yaw = toMe - sgn * D.commanderMaxDeg * DEG;
+    const dist = Math.hypot(them.x - best.pos.x, them.z - best.pos.z);
+    const look = new THREE.Vector3(best.pos.x - Math.sin(yaw) * dist, them.y - 0.08, best.pos.z - Math.cos(yaw) * dist);
+    return { pos: best.pos, look };
   }
   get inDialogue(): boolean {
     return this.dBlend > 0.01;

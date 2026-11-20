@@ -178,7 +178,7 @@ export abstract class FieldScene extends WalkScene {
     const hud = this.hud;
     hud.setBars(c.shield, c.shieldMax, c.health, 100, c.medkits, c.medkitMax);
     const s = ws.slot;
-    hud.setWeapon(WEAPONS[ws.current].name, s.mag, ws.unlimited(ws.current) ? null : s.reserve, WEAPON_ORDER.indexOf(ws.current), WEAPON_ORDER.map((w) => WEAPONS[w].name));
+    hud.setWeapon(WEAPONS[ws.current].name, s.mag, ws.unlimited(ws.current) ? null : s.reserve, WEAPON_ORDER.indexOf(ws.current), WEAPON_ORDER.map((w) => WEAPONS[w].name), s.magSize);
     const fov = this.world.cam.fov;
     const gap = (Math.tan(((c.crosshairSpread() / 2) * Math.PI) / 180) / Math.tan(((fov / 2) * Math.PI) / 180)) * (window.innerHeight / 2) + 4;
     const p = this.world.player;

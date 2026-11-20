@@ -19,6 +19,8 @@ export const BRIDGE = {
   terminal: { x: 5.5, z: 6.5 },
   door: { x: 0, z: 8 },
   spawn: { x: 0, z: 8, yaw: 0 },
+  /** The commander steps this far in from the door so the shoulder camera starts clear of the aft wall (m). */
+  spawnInset: 1.9,
 };
 
 export interface Place {
@@ -115,6 +117,13 @@ export const KORR = {
   dock: { x0: 57.5, x1: 92.5, z0: -102.5, z1: -57.5, stacks: [ { x: 63, z: -72 }, { x: 87, z: -88 } ] as XZ[], foreman: { x: 75, z: -96 } },
   extraction: { x: 75, z: -98 },
   kwanAtDock: { x: 70, z: -60 },
+  /** Warm work lights inside the hall, corridor and office so the interiors read at dusk. */
+  lamps: [
+    { x: 67, y: 5, z: -30, color: 0xffc890, intensity: 9, range: 18 },
+    { x: 83, y: 5, z: -27, color: 0xffc890, intensity: 9, range: 18 },
+    { x: 75, y: 3.5, z: -48, color: 0xffb070, intensity: 6, range: 12 },
+    { x: 86, y: 3, z: -38, color: 0xfff0d0, intensity: 4, range: 8 },
+  ],
   nodes: [
     { id: 'k-a1', type: 'alloy', x: -62, z: 59 },
     { id: 'k-a2', type: 'alloy', x: -44, z: 28 },

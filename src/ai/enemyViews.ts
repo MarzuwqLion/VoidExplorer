@@ -7,6 +7,31 @@ import { optimizeModel, bakeSingleMesh } from '../world/models/optimize';
 
 const LOD_DIST = 18;
 
+/** Acid pool texture: a bright rim around a mottled, bubbling centre. */
+function acidTexture(): THREE.Texture | null {
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d')!;
+  const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grd.addColorStop(0, 'rgba(120,200,40,0.55)');
+  grd.addColorStop(0.7, 'rgba(150,240,50,0.7)');
+  grd.addColorStop(0.88, 'rgba(220,255,120,1)');
+  grd.addColorStop(1, 'rgba(160,255,60,0)');
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 26; i++) {
+    const a = (i * 2.399) % (Math.PI * 2), r = 8 + ((i * 37) % 44);
+    g.fillStyle = 'rgba(230,255,150,0.55)';
+    g.beginPath();
+    g.arc(64 + Math.cos(a) * r, 64 + Math.sin(a) * r, 2 + (i % 4), 0, Math.PI * 2);
+    g.fill();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 /** Visuals for enemies, projectiles, hazards and pickups, synced from the director each frame. */
 export class EnemyViews {
   readonly group = new THREE.Group();
@@ -19,8 +44,11 @@ export class EnemyViews {
   private lobMesh: THREE.InstancedMesh;
   private poolMesh: THREE.InstancedMesh;
   private ringMesh: THREE.InstancedMesh;
+  private fillMesh: THREE.InstancedMesh;
   private pickMesh: THREE.InstancedMesh;
   private labels = new Map<number, HTMLElement>();
+  /** Hit flash per enemy: the non-glowing materials it brightens, the flash level and the last flinch seen. */
+  private flashes = new Map<number, { mats: THREE.MeshStandardMaterial[]; k: number; flinch: number }>();
   private t = 0;
   private m = new THREE.Matrix4();
 
@@ -35,10 +63,17 @@ export class EnemyViews {
     this.group.add(this.laser);
     const acid = new THREE.MeshStandardMaterial({ color: 0x9aff40, emissive: 0x6adf20, emissiveIntensity: 1.5, roughness: 0.3 });
     this.lobMesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.25, 1), acid, 16);
-    this.poolMesh = new THREE.InstancedMesh(new THREE.CircleGeometry(1, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x8aef30, transparent: true, opacity: 0.45, depthWrite: false }), 16);
-    this.ringMesh = new THREE.InstancedMesh(new THREE.RingGeometry(0.85, 1, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff3020, transparent: true, opacity: 0.8, depthWrite: false, side: THREE.DoubleSide }), 12);
+    const acidMap = acidTexture();
+    this.poolMesh = new THREE.InstancedMesh(
+      new THREE.CircleGeometry(1, 24).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: acidMap ? 0xffffff : 0x8aef30, map: acidMap, transparent: true, opacity: 0.75, depthWrite: false }),
+      16,
+    );
+    this.ringMesh = new THREE.InstancedMesh(new THREE.RingGeometry(0.9, 1, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff3020, transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide }), 12);
+    // Mortar warning fill: grows from the centre to the ring as the shell comes down.
+    this.fillMesh = new THREE.InstancedMesh(new THREE.CircleGeometry(1, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff3020, transparent: true, opacity: 0.28, depthWrite: false }), 12);
     this.pickMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.35, 0.22, 0.25), new THREE.MeshStandardMaterial({ color: 0x5a6a3a, emissive: 0xf2a541, emissiveIntensity: 0.5 }), 24);
-    for (const im of [this.lobMesh, this.poolMesh, this.ringMesh, this.pickMesh]) {
+    for (const im of [this.lobMesh, this.poolMesh, this.ringMesh, this.fillMesh, this.pickMesh]) {
       im.count = 0;
       im.frustumCulled = false;
       this.group.add(im);
@@ -64,6 +99,22 @@ export class EnemyViews {
         meshes.forEach((m, i) => (m.castShadow = i < (e.def.boss ? 4 : 2)));
         this.views.set(e.uid, v);
         this.group.add(v.root);
+        const mats = new Set<THREE.MeshStandardMaterial>();
+        v.root.traverse((o) => {
+          const mm = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+          if (mm?.isMeshStandardMaterial && mm.emissive && mm.emissive.getHex() === 0) mats.add(mm);
+        });
+        this.flashes.set(e.uid, { mats: [...mats], k: 0, flinch: 0 });
+      }
+      const fl = this.flashes.get(e.uid);
+      if (fl) {
+        if (e.alive && e.flinch > fl.flinch + 0.3) fl.k = 1;
+        fl.flinch = e.flinch;
+        if (fl.k > 0) {
+          fl.k = Math.max(0, fl.k - dt * AI.hitFlashDecay);
+          const c = fl.k * AI.hitFlash;
+          for (const m of fl.mats) m.emissive.setRGB(c, c * 0.92, c * 0.85);
+        }
       }
       v.root.position.lerpVectors(e.prevPos, e.pos, alpha);
       // Swap to the baked single mesh when far from the camera.
@@ -126,6 +177,7 @@ export class EnemyViews {
         (mm.material as THREE.Material | undefined)?.dispose?.();
       });
       this.views.delete(uid);
+      this.flashes.delete(uid);
     }
     // Projectiles and hazards.
     const p = this.dir.proj;
@@ -134,17 +186,23 @@ export class EnemyViews {
     this.lobMesh.instanceMatrix.needsUpdate = true;
     this.poolMesh.count = Math.min(16, p.pools.length);
     p.pools.slice(0, 16).forEach((q, i) => {
-      const s = q.r * Math.min(1, q.t * 4) * (1 - Math.max(0, q.t - SPITTER.poolTime + 0.5));
-      this.poolMesh.setMatrixAt(i, this.m.compose(new THREE.Vector3(q.x, q.y + 0.04, q.z), new THREE.Quaternion(), new THREE.Vector3(s, 1, s)));
+      const wobble = 1 + Math.sin(this.t * 6 + i * 1.7) * 0.03;
+      const s = q.r * Math.min(1, q.t * 4) * (1 - Math.max(0, q.t - SPITTER.poolTime + 0.5)) * wobble;
+      const spin = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.t * 0.4 + i);
+      this.poolMesh.setMatrixAt(i, this.m.compose(new THREE.Vector3(q.x, q.y + 0.04, q.z), spin, new THREE.Vector3(s, 1, s)));
     });
     this.poolMesh.instanceMatrix.needsUpdate = true;
-    this.ringMesh.count = Math.min(12, p.mortars.length);
+    this.ringMesh.count = this.fillMesh.count = Math.min(12, p.mortars.length);
     p.mortars.slice(0, 12).forEach((mo, i) => {
       const k = Math.min(1, mo.t / FOREMAN.mortarWarn);
-      const s = FOREMAN.mortarRadius * (0.3 + 0.7 * k);
-      this.ringMesh.setMatrixAt(i, this.m.compose(new THREE.Vector3(mo.x, mo.y + 0.06, mo.z), new THREE.Quaternion(), new THREE.Vector3(s, 1, s)));
+      const r = FOREMAN.mortarRadius;
+      const at = new THREE.Vector3(mo.x, mo.y + 0.06, mo.z);
+      this.ringMesh.setMatrixAt(i, this.m.compose(at, new THREE.Quaternion(), new THREE.Vector3(r, 1, r)));
+      const f = Math.max(0.02, r * k);
+      this.fillMesh.setMatrixAt(i, this.m.compose(at.setY(mo.y + 0.05), new THREE.Quaternion(), new THREE.Vector3(f, 1, f)));
     });
     this.ringMesh.instanceMatrix.needsUpdate = true;
+    this.fillMesh.instanceMatrix.needsUpdate = true;
     const picks = this.dir.pickups;
     this.pickMesh.count = Math.min(24, picks.length);
     picks.slice(0, 24).forEach((k, i) =>

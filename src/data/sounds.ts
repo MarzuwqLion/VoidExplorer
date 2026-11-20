@@ -80,6 +80,7 @@ export const SOUNDS = {
   shuttle_thrust: fx('noise', { freq: 300, q: 0.6, attack: 0.6, decay: 2.4, type: 0 }, 0.6),
   alarm: { recipe: 'alarm', bus: 'effects', volume: 0.5 } as SoundDef,
   checkpoint: ui('chord', { n0: 523, n1: 784, decay: 0.4 }, 0.3),
+  objective: ui('chord', { n0: 587, n1: 880, n2: 1175, decay: 0.45 }, 0.22),
   ship_boost: fx('noise', { freq: 200, sweepTo: 900, q: 1, attack: 0.1, decay: 0.8, type: 0 }, 0.4, 0.6),
   warning: ui('tone', { f0: 700, f1: 700, decay: 0.3, wave: 3 }, 0.35),
 } satisfies Record<string, SoundDef>;

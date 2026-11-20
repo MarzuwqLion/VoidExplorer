@@ -38,7 +38,7 @@ export class BridgeScene extends WalkScene {
       prims: bridgePrims(),
       ground: () => 0,
       bounds: { minX: -B.halfX, minZ: -B.halfZ, maxX: B.halfX, maxZ: B.halfZ },
-      spawn: { x: B.spawn.x, z: B.spawn.z - 0.3, yaw: B.spawn.yaw, y: 0.02 },
+      spawn: { x: B.spawn.x, z: B.spawn.z - B.spawnInset, yaw: B.spawn.yaw, y: 0.02 },
       mode: 'bridge',
     });
     this.setupWalk(world);
@@ -107,7 +107,7 @@ export class BridgeScene extends WalkScene {
     this.three.background = new THREE.Color(0x01030a);
     const stars = makeStarfield(1500, 600, 11);
     this.three.add(stars);
-    const star = makeStar(40);
+    const star = makeStar(40, undefined, { spriteCore: true });
     star.position.set(-140, 40, -420);
     this.three.add(star);
     const near = PLANETS.find((p) => p.id === 'amara')!;
@@ -132,7 +132,7 @@ export class BridgeScene extends WalkScene {
     sc.far = 40;
     this.three.add(key, key.target);
     for (const z of [-5, 1, 6]) {
-      const fill = new THREE.PointLight(0xcfe2ff, 14, 12, 1.4);
+      const fill = new THREE.PointLight(0xcfe2ff, 11, 12, 1.4);
       fill.position.set(0, 3.5, z);
       this.three.add(fill);
     }

@@ -19,9 +19,12 @@ export const AI = {
   /** Raider aim error: degrees at rest plus degrees per m/s of commander speed. */
   aimErrorBase: 1.9,
   aimErrorPerSpeed: 0.22,
-  /** Extra error when the commander is crouched (smaller silhouette is already harder). */
+  /** Flinch and melee stagger durations (s). */
   flinchTime: 0.18,
   staggerTime: 0.9,
+  /** Hit flash on enemy models: peak brightness and how fast it fades (per second). */
+  hitFlash: 0.55,
+  hitFlashDecay: 9,
 };
 
 export interface EnemyDef {
