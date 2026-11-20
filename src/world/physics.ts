@@ -53,6 +53,9 @@ export class PhysicsWorld {
     if (rotY) d.setRotation({ x: 0, y: Math.sin(rotY / 2), z: 0, w: Math.cos(rotY / 2) });
     return this.finish(d, tag);
   }
+  addBoxQ(c: V3, half: V3, q: { x: number; y: number; z: number; w: number }, tag: ColliderTag): RAPIER.Collider {
+    return this.finish(RAPIER.ColliderDesc.cuboid(half.x, half.y, half.z).setTranslation(c.x, c.y, c.z).setRotation(q), tag);
+  }
   addCylinder(c: V3, halfH: number, r: number, tag: ColliderTag): RAPIER.Collider {
     return this.finish(RAPIER.ColliderDesc.cylinder(halfH, r).setTranslation(c.x, c.y, c.z), tag);
   }

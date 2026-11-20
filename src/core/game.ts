@@ -33,12 +33,16 @@ export class Game {
   /** Called each frame with real dt for the debug panel. */
   onFrame: ((dt: number) => void) | null = null;
   onTick: ((dt: number) => void) | null = null;
+  /** Runs before input is sampled each step (the loop bot injects input here). */
+  preTick: ((dt: number) => void) | null = null;
   fps = 0;
   drawCalls = 0;
   private lastT = 0;
   private wantsLock = false;
   private factories = new Map<SceneId, SceneFactory>();
   webgl = true;
+  /** Game state captured at the moment of landing, restored by "Abort mission". */
+  landingSnapshot: import('./state').GameStateData | null = null;
 
   constructor(
     readonly canvas: HTMLCanvasElement,
@@ -52,7 +56,7 @@ export class Game {
       r.toneMappingExposure = 1.0;
       r.outputColorSpace = THREE.SRGBColorSpace;
       r.shadowMap.enabled = true;
-      r.shadowMap.type = THREE.PCFSoftShadowMap;
+      r.shadowMap.type = THREE.PCFShadowMap;
     } catch (e) {
       console.error('WebGL unavailable', e);
       this.webgl = false;
@@ -124,6 +128,7 @@ export class Game {
 
   /** One fixed simulation step. */
   private tick(dt: number): void {
+    this.preTick?.(dt);
     this.input.poll(dt);
     this.onTick?.(dt);
     if (this.ui.blocking()) {

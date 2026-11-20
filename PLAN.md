@@ -1,14 +1,14 @@
 # PLAN
 
-Next up: M1 Walking skeleton — bridge room + capsule, system map with 15 spheres, planet flat fields, full-loop test.
+Next up: M2 Commander and camera — test gym (debug only), movement unit tests, camera-wall test, framing screenshots.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
   - [x] unit tests: fixed-step loop, input mapping
-- [ ] M1 Walking skeleton
-  - [ ] full-loop test passes in both planet orders (input layer + debug API)
-  - [ ] planet data test: 15 entries, exactly 2 landable
-  - [ ] one screenshot per scene reviewed
+- [x] M1 Walking skeleton
+  - [x] full-loop test passes in both planet orders (input layer + debug API)
+  - [x] planet data test: 15 entries, exactly 2 landable
+  - [x] one screenshot per scene reviewed
 - [ ] M2 Commander and camera
   - [ ] unit tests: move speeds, roll distance, invulnerability window
   - [ ] scripted camera-into-walls test never passes through

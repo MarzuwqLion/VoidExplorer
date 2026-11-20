@@ -3,10 +3,12 @@ import type { SceneId } from '../core/state';
 import type { ResourceId } from '../data/names';
 import type { Action } from '../data/bindings';
 import { rng } from '../core/rng';
+import { Bot } from './bot';
 
 /** Installs window.__game, the debug and test API. */
 export function installDebugApi(game: Game, extra: Record<string, unknown> = {}): void {
   const v = game.input.virtual;
+  const bot = new Bot(game);
   const api = {
     game,
     state: () => ({ ...game.state.snapshot(), sceneId: game.sceneId, transitioning: game.transitioning, info: game.scene?.api.info?.() ?? {} }),
@@ -64,6 +66,7 @@ export function installDebugApi(game: Game, extra: Record<string, unknown> = {})
       webgl: game.webgl,
     }),
     audio: () => Object.fromEntries(game.audio.played),
+    bot,
     ...extra,
   };
   (window as unknown as { __game: typeof api }).__game = api;
