@@ -1,0 +1,54 @@
+# PLAN
+
+Next up: M0 Foundation — scaffold Vite + strict TS, core loop, input, state, debug API, title screen.
+
+- [ ] M0 Foundation
+  - [ ] e2e loads title screen, screenshot not blank
+  - [ ] unit tests: fixed-step loop, input mapping
+- [ ] M1 Walking skeleton
+  - [ ] full-loop test passes in both planet orders (input layer + debug API)
+  - [ ] planet data test: 15 entries, exactly 2 landable
+  - [ ] one screenshot per scene reviewed
+- [ ] M2 Commander and camera
+  - [ ] unit tests: move speeds, roll distance, invulnerability window
+  - [ ] scripted camera-into-walls test never passes through
+  - [ ] screenshots: default, aiming, roadie run, crouch framing
+- [ ] M3 Weapons
+  - [ ] unit tests: shots-to-kill and falloff
+  - [ ] scripted test kills a dummy with each weapon
+  - [ ] HUD screenshot reviewed
+- [ ] M4 Enemies
+  - [ ] each enemy type paths to player or cover; riflemen reach cover points
+  - [ ] stationary player vs five riflemen dies in 5-15 s
+  - [ ] hold-fire stand-in kills one of each type in expected shots
+  - [ ] 5-minute sim: no NaN, no entities outside level
+- [ ] M5 Bridge and crew
+  - [ ] dialogue graph test passes
+  - [ ] e2e talks to each crew member and buys an upgrade
+  - [ ] screenshots: bridge, dialogue camera
+- [ ] M6 System map
+  - [ ] ship beside sun and each planet: panel name/class, only Amara and Korr offer Land
+  - [ ] fly to a planet using inputs only
+  - [ ] abort round trip: bridge, map, land, abort, map, bridge
+  - [ ] screenshots: zoomed in, zoomed out, three panels
+- [ ] M7 Amara
+  - [ ] top-down map matches layout table, node counts correct
+  - [ ] loop bot completes mission with and without tunnel
+  - [ ] Alpha sim: charge hits stationary player, pillar stuns, killed in 15-120 s
+  - [ ] screenshot of every beat
+- [ ] M8 Korr
+  - [ ] top-down map matches layout table
+  - [ ] loop bot completes mission through both branches; threaten spawns extra wave, reassure leaves yard unaware
+  - [ ] Foreman sim: cannon kills stationary player in open, cover blocks, heat-sink fire kills in 15-120 s
+  - [ ] screenshot of every beat
+- [ ] M9 Closing the loop
+  - [ ] full-loop both orders checks debrief variant per lookout choice
+  - [ ] save/continue restores mid-game state
+  - [ ] five scene round trips grow geometry/texture counts <= 5%
+- [ ] M10 Feel and polish
+  - [ ] draw calls within budget at busy moment per scene
+  - [ ] every UI screen at 1280x720 and 1920x1080, no overflow/overlap
+  - [ ] injected gamepad completes a bridge conversation and a kill
+  - [ ] tuning panel changes game live
+- [ ] M11 Final verification and handoff
+  - [ ] definition of done (spec section 13)
