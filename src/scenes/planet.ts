@@ -87,7 +87,7 @@ export class PlanetScene extends FieldScene {
     if (level.weather === 'snow') {
       this.addSnow();
       // Suit lamp for the dusk interiors.
-      this.lamp = new THREE.PointLight(0xdce8ff, 9, 16, 1.6);
+      this.lamp = new THREE.PointLight(0xdce8ff, 5, 12, 1.8);
       this.three.add(this.lamp);
     }
     // Shuttle.

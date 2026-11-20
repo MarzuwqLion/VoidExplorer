@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: M11 — run every check (typecheck, lint, unit, e2e, build, preview), review fresh screenshots, KNOWN_ISSUES, final report.
+Next up: Done. All milestones M0 to M11 ticked; definition of done met (see final report). Owner playtest per README checklist.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -50,5 +50,5 @@ Next up: M11 — run every check (typecheck, lint, unit, e2e, build, preview), r
   - [x] every UI screen at 1280x720 and 1920x1080, no overflow/overlap
   - [x] injected gamepad completes a bridge conversation and a kill
   - [x] tuning panel changes game live
-- [ ] M11 Final verification and handoff
-  - [ ] definition of done (spec section 13)
+- [x] M11 Final verification and handoff
+  - [x] definition of done (spec section 13)

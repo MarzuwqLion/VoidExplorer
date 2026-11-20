@@ -23,11 +23,11 @@ export class TitleScene extends Scene {
     this.three.background = new THREE.Color(0x02040a);
     this.three.add(makeStarfield(2500, 1500));
     const star = makeStar(60);
-    star.position.set(-420, 170, -700);
+    star.position.set(-560, 260, -700);
     this.three.add(star);
     this.three.add(new THREE.AmbientLight(0x6070a0, 0.6));
     const sun = new THREE.DirectionalLight(0xffc080, 2.6);
-    sun.position.set(-420, 170, -700).normalize();
+    sun.position.set(-560, 260, -700).normalize();
     this.three.add(sun);
     const fill = new THREE.DirectionalLight(0x8fb0e0, 1.2);
     fill.position.set(1, 0.5, 1);
