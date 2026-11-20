@@ -40,6 +40,7 @@ export abstract class FieldScene extends WalkScene {
     const c = this.combat;
     c.events.on('shot', (e) => {
       if (e.player) {
+        g.rumble(0.15, 0.3, 50);
         const m = this.commander.muzzleWorld();
         this.fx.tracer(m, e.to, e.color);
         this.fx.muzzle(m);
@@ -66,6 +67,9 @@ export abstract class FieldScene extends WalkScene {
       this.hud.flashColor(e.shield ? 'rgba(92,200,255,0.5)' : 'rgba(255,40,30,0.55)');
       this.hitReact = 1;
       if (g.settings.shake) world.cam.addShake(0.25);
+      const chest = world.chest();
+      this.fx.burst(chest, 8, e.shield ? 0x5cc8ff : 0xff4030, 2.5, 0.3, 0, 0.5);
+      g.rumble(e.shield ? 0.2 : 0.6, 0.4, 120);
     });
     c.events.on('sound', (e) => (e.pos ? this.playAt(e.id, e.pos) : g.audio.play(e.id)));
     c.events.on('shake', (v) => g.settings.shake && world.cam.addShake(v));
@@ -115,6 +119,15 @@ export abstract class FieldScene extends WalkScene {
   }
 
   protected onKill(_t: Damageable): void {}
+
+  protected onRollStart(): void {
+    super.onRollStart();
+    const p = this.world.player.pos;
+    this.fx.burst(new THREE.Vector3(p.x, p.y + 0.1, p.z), 14, 0xb8a888, 2, 0.6, -1, 0.4);
+  }
+  protected footstep(): SoundId {
+    return 'footstep_rock';
+  }
 
   /** Teleport to the checkpoint with everything restored. */
   respawn(): void {

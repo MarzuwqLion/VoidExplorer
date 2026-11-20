@@ -35,6 +35,8 @@ export interface MenuItem {
 
 /** A vertical list driven by keyboard, mouse and gamepad. */
 export class MenuList {
+  /** Played on selection changes (set by the game). */
+  static onTick: (() => void) | null = null;
   readonly el: HTMLElement;
   index = 0;
   private rows: HTMLElement[] = [];
@@ -92,6 +94,7 @@ export class MenuList {
     this.select(first < 0 ? 0 : first);
   }
   select(i: number): void {
+    if (i !== this.index) MenuList.onTick?.();
     this.index = i;
     this.rows.forEach((r, j) => r.classList.toggle('sel', j === i));
   }

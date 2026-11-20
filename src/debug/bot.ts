@@ -7,6 +7,10 @@ import { PLANET_BY_ID } from '../data/planets';
 
 export interface BotScript {
   order: MissionPlanet[];
+  /** Take Park's tunnel shortcut on Amara. */
+  tunnel?: boolean;
+  /** Lookout choice on Korr. */
+  lookout?: 'reassure' | 'threaten';
   /** Dialogue labels to pick when offered, in priority order. */
   choices: string[];
   /** Flags the bot should obtain by talking (e.g. tunnel shortcut). */
@@ -31,8 +35,12 @@ export class Bot {
   }
   start(script: Partial<BotScript> = {}): void {
     this.script = { ...this.script, ...script };
+    const extra = [this.script.lookout === 'threaten' ? 'Threaten him' : 'Reassure him', "I'll get your cores.", "Stay here. I'll clear the dock.", "I'll take the helm."];
+    if (this.script.tunnel) extra.unshift('Is there another way into the ravine?');
+    this.script.choices = [...this.script.choices, ...extra];
     this.active = true;
     this.game.debug.god = true;
+    this.game.debug.infiniteAmmo = true;
     this.log = [];
   }
   stop(): void {
@@ -75,6 +83,7 @@ export class Bot {
 
   private talk(ws: WalkScene): void {
     const d = ws.dialogue!;
+    if (d.runner.node) this.note('node ' + d.runner.graph.id + ':' + d.runner.node.id);
     const choices = d.runner.choices().map((c) => c.label);
     if (choices.length && !d.typing) {
       const pick = this.script.choices.find((c) => choices.includes(c)) ?? (choices.includes('Goodbye') ? 'Goodbye' : choices[0]);
@@ -102,19 +111,20 @@ export class Bot {
       }
     } else if (this.game.sceneId === 'planet') {
       const sh = info.shuttle as XZ;
+      if (this.fight(ws, dt)) return;
+      const hunt = this.straggler(ws);
+      if (hunt) goal = hunt;
       if (info.complete) {
         goal = sh;
         wantFocus = 'shuttle';
       } else wantFocus = (info.wantFocus as string) ?? null;
+      // Ask Park for the tunnel before heading out, if scripted.
+      if (this.script.tunnel && info.planet === 'amara' && !this.game.state.flag('amara_tunnel') && this.game.state.flag('amara_briefed')) wantFocus = 'talk-park';
     }
     const f = ws.world.focus;
     if (f && wantFocus && f.id === wantFocus) {
       v.taps.add('interact');
       this.note('interact ' + f.id);
-      return;
-    }
-    if (f && f.id.startsWith('talk-') && wantFocus === null && this.game.sceneId === 'planet') {
-      v.taps.add('interact');
       return;
     }
     const wantIt = wantFocus ? ws.world.interactables.find((i) => i.id === wantFocus) : null;
@@ -157,6 +167,83 @@ export class Bot {
       v.taps.add('roll');
     }
     this.last = { x: p.x, z: p.z };
+  }
+
+  /** Shoot the nearest visible enemy. Returns true while engaged. */
+  private hiddenT = 0;
+  /** Nearest alive enemy of an active encounter once nothing has been visible for a few seconds. */
+  private straggler(ws: WalkScene): XZ | null {
+    const d = (ws as unknown as { director?: import('../ai/director').Director }).director;
+    if (!d) return null;
+    const alive = d.enemies.filter((e) => e.alive && e.encounter && d.isActive(e.encounter));
+    if (!alive.length) {
+      this.hiddenT = 0;
+      return null;
+    }
+    this.hiddenT += 1 / 60;
+    if (this.hiddenT < 4) return null;
+    const p = ws.world.player.pos;
+    alive.sort((a, b) => a.pos.distanceTo(p) - b.pos.distanceTo(p));
+    const e = alive[0];
+    if (e.pos.y - p.y > 3) {
+      // Elevated: back off to a spot with a line of sight over the edge.
+      const dx = p.x - e.pos.x, dz = p.z - e.pos.z, l = Math.hypot(dx, dz) || 1;
+      const q = ws.world.nav.nearestWalkable(e.pos.x + (dx / l) * 18, e.pos.z + (dz / l) * 18, 8);
+      if (q) return q;
+    }
+    return { x: e.pos.x, z: e.pos.z };
+  }
+  private engageT = 0;
+  private lastHp = 0;
+  private ignoreT = 0;
+  private fight(ws: WalkScene, dt: number): boolean {
+    this.ignoreT = Math.max(0, this.ignoreT - dt);
+    if (this.ignoreT > 0) return false;
+    const sc = ws as unknown as { director?: { enemies: { alive: boolean; pos: { x: number; y: number; z: number }; def: { height: number }; v: { health: number; armor: number } }[] } };
+    const enemies = sc.director?.enemies ?? [];
+    const cam = ws.world.cam;
+    const p = ws.world.player.pos;
+    let best: { x: number; y: number; z: number } | null = null, bd = 45, hp = 0;
+    for (const e of enemies) {
+      if (!e.alive) continue;
+      const tgt = { x: e.pos.x, y: e.pos.y + e.def.height * 0.75, z: e.pos.z };
+      const d = Math.hypot(tgt.x - p.x, tgt.z - p.z);
+      if (d >= bd) continue;
+      if (!ws.world.physics.clear({ x: p.x, y: p.y + 1.5, z: p.z }, tgt)) continue;
+      bd = d;
+      best = tgt;
+      hp = e.v.health + e.v.armor;
+    }
+    const v = this.game.input.virtual;
+    if (!best) {
+      this.engageT = 0;
+      return false;
+    }
+    this.hiddenT = 0;
+    // No damage dealt for a while: close the distance; give up for a moment if that fails too.
+    if (Math.abs(hp - this.lastHp) > 0.01) this.engageT = 0;
+    this.lastHp = hp;
+    this.engageT += dt;
+    if (this.engageT > 25) {
+      this.engageT = 0;
+      this.ignoreT = 6;
+      return false;
+    }
+    if (bd < 7) v.move = { x: 0, y: -1 };
+    else if (this.engageT > 3 && bd > 9) v.move = { x: 0, y: 1 };
+    const dx = best.x - cam.pos.x, dy = best.y - cam.pos.y, dz = best.z - cam.pos.z;
+    const yaw = (Math.atan2(-dx, -dz) * 180) / Math.PI;
+    const pitch = (Math.atan2(dy, Math.hypot(dx, dz)) * 180) / Math.PI;
+    let dyaw = yaw - cam.yaw;
+    while (dyaw > 180) dyaw -= 360;
+    while (dyaw < -180) dyaw += 360;
+    v.look = { x: -Math.max(-25, Math.min(25, dyaw)), y: Math.max(-15, Math.min(15, pitch - cam.pitch)) };
+    v.held.add('aim');
+    const cw = (ws as unknown as { combat?: { weapons: { slot: { mag: number; reserve: number }; current: string } } }).combat?.weapons;
+    if (cw && cw.current !== 'pistol' && cw.slot.mag === 0 && cw.slot.reserve === 0) v.taps.add('weapon1');
+    if (Math.abs(dyaw) < 4 && this.tickN % 3 === 0) v.taps.add('fire');
+    if (this.tickN % 600 === 0) v.taps.add('reload');
+    return true;
   }
 
   private flyMap(s: SystemMapScene): void {

@@ -40,6 +40,9 @@ export class UpgradeTerminal implements Screen {
     this.el.innerHTML = '';
     const t = h('div', 'term', undefined, this.el);
     h('h2', '', 'Upgrade terminal', t);
+    const q = h('div', 'eff', '"Bring me materials and I\'ll bolt on improvements. No materials, no miracles." ' + String.fromCharCode(8212) + ' ' + NAMES.crew.quartermaster.short, t);
+    q.style.marginBottom = '0.6rem';
+    q.style.fontStyle = 'italic';
     const res = h('div', 'res', undefined, t);
     for (const r of ['alloy', 'biomass', 'isotopes'] as ResourceId[]) {
       const sp = h('span', '', NAMES.resources[r] + ' ', res);

@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: M7 Amara — layouts.ts data written; geometry in src/world/planets/amara.ts (subagent), mission runtime + Landfall mission, harvest nodes, NPCs, top-down map.
+Next up: M9/M10 — run tests/e2e/closing.spec.ts and polish.spec.ts, fix failures, review M9/M10 screenshots, then M11 handoff.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -31,16 +31,16 @@ Next up: M7 Amara — layouts.ts data written; geometry in src/world/planets/ama
   - [x] fly to a planet using inputs only
   - [x] abort round trip: bridge, map, land, abort, map, bridge
   - [x] screenshots: zoomed in, zoomed out, three panels
-- [ ] M7 Amara
-  - [ ] top-down map matches layout table, node counts correct
-  - [ ] loop bot completes mission with and without tunnel
-  - [ ] Alpha sim: charge hits stationary player, pillar stuns, killed in 15-120 s
-  - [ ] screenshot of every beat
-- [ ] M8 Korr
-  - [ ] top-down map matches layout table
-  - [ ] loop bot completes mission through both branches; threaten spawns extra wave, reassure leaves yard unaware
-  - [ ] Foreman sim: cannon kills stationary player in open, cover blocks, heat-sink fire kills in 15-120 s
-  - [ ] screenshot of every beat
+- [x] M7 Amara
+  - [x] top-down map matches layout table, node counts correct
+  - [x] loop bot completes mission with and without tunnel
+  - [x] Alpha sim: charge hits stationary player, pillar stuns, killed in 15-120 s
+  - [x] screenshot of every beat
+- [x] M8 Korr
+  - [x] top-down map matches layout table
+  - [x] loop bot completes mission through both branches; threaten spawns extra wave, reassure leaves yard unaware
+  - [x] Foreman sim: cannon kills stationary player in open, cover blocks, heat-sink fire kills in 15-120 s
+  - [x] screenshot of every beat
 - [ ] M9 Closing the loop
   - [ ] full-loop both orders checks debrief variant per lookout choice
   - [ ] save/continue restores mid-game state

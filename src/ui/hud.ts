@@ -3,7 +3,7 @@ import { h } from './screens';
 
 export interface CompassMarker {
   bearing: number;
-  kind: 'obj' | 'alloy' | 'biomass' | 'isotopes';
+  kind: 'obj' | 'alloy' | 'biomass' | 'isotopes' | 'enemy';
   dist?: number;
 }
 const INF = '∞';
@@ -189,7 +189,7 @@ export class Hud {
     for (const m of markers) {
       const x = place(m.bearing);
       if (x === null) continue;
-      const txt = m.kind === 'obj' ? DOWN + ' ' + (m.dist !== undefined ? Math.round(m.dist) + 'm' : '') : DIAMOND;
+      const txt = m.kind === 'obj' ? DOWN + ' ' + (m.dist !== undefined ? Math.round(m.dist) + 'm' : '') : m.kind === 'enemy' ? DOWN : DIAMOND;
       parts.push('<div class="mk ' + m.kind + '" style="left:' + x + 'px">' + txt + '</div>');
     }
     this.compass.innerHTML = parts.join('');

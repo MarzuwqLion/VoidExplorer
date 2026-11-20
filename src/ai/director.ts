@@ -142,6 +142,7 @@ export class Director {
   alert(e: Enemy): void {
     if (e.alerted) return;
     e.alerted = true;
+    e.sinceSeen = Math.min(e.sinceSeen, 0.5);
     e.lastKnown.copy(this.player);
     for (const o of this.enemies) {
       if (o === e || !o.alive || o.alerted || o.alertPending >= 0) continue;
@@ -254,6 +255,7 @@ export class Director {
 
   private onKill(e: Enemy): void {
     this.releaseToken(e);
+    if (e.def.boss) this.rout(e.encounter);
     if (e.cover >= 0 && this.cover[e.cover]) this.cover[e.cover].owner = -1;
     this.sound(e.def.raider ? 'enemy_death_raider' : 'enemy_death_creature', e.pos);
     if (e.def.raider && !e.def.boss && this.rng.chance(AMMO_DROP.chance)) {
@@ -299,7 +301,8 @@ export class Director {
         this.releaseToken(e);
         continue;
       }
-      BRAINS[e.type](e, this, dt);
+      if (e.mem.flee) this.flee(e, dt);
+      else BRAINS[e.type](e, this, dt);
     }
     this.playerHiddenT = anyVisible.v ? 0 : this.playerHiddenT + dt;
     // Projectiles.
@@ -340,7 +343,7 @@ export class Director {
     // Encounters.
     for (const enc of this.encounters) {
       const st = this.status.get(enc.id);
-      if (st === 'idle' && !enc.manual && !this.combat.dead && Math.hypot(pp.x - enc.trigger.x, pp.z - enc.trigger.z) <= enc.trigger.r) this.startEncounter(enc.id);
+      if (st === 'idle' && !enc.manual && !this.combat.dead && [enc.trigger, ...(enc.alt ?? [])].some((t) => Math.hypot(pp.x - t.x, pp.z - t.z) <= t.r)) this.startEncounter(enc.id);
       if (st !== 'active') continue;
       const mine = this.enemies.filter((e) => e.encounter === enc.id && !e.removed);
       const alive = mine.filter((e) => e.alive).length;
@@ -356,6 +359,23 @@ export class Director {
     this.enemies = this.enemies.filter((e) => !e.removed || e.deadT < AI.fadeAfter + 1);
   }
   private poolAcc = 0;
+  /** A boss fell: the rest of its encounter scatters and leaves. */
+  rout(encounter: string | null): void {
+    for (const e of this.enemies) if (e.alive && e.encounter === encounter && !e.def.boss) {
+      e.mem.flee = 1;
+      this.releaseToken(e);
+    }
+  }
+  private flee(e: Enemy, dt: number): void {
+    e.mem.fleeT = (e.mem.fleeT ?? 0) + dt;
+    const p = this.player;
+    const away = new THREE.Vector3(e.pos.x - p.x, 0, e.pos.z - p.z).normalize();
+    this.moveTo(e, { x: e.pos.x + away.x * 8, z: e.pos.z + away.z * 8 }, e.def.speed, dt);
+    e.anim = 'move';
+    e.glow = 0;
+    e.laser = null;
+    if (e.mem.fleeT > 4) this.remove(e);
+  }
   isActive(id: string): boolean {
     return this.status.get(id) === 'active';
   }

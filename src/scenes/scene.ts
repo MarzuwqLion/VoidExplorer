@@ -23,7 +23,7 @@ export abstract class Scene {
   camera = new THREE.PerspectiveCamera(70, 16 / 9, 0.1, 4000);
   api: SceneApi = {};
   private cleanups: (() => void)[] = [];
-  constructor(protected readonly game: Game) {}
+  constructor(readonly game: Game) {}
 
   abstract enter(opts: Record<string, unknown>): Promise<void> | void;
   abstract update(dt: number): void;

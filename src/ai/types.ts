@@ -57,11 +57,14 @@ export function rayHitbox(o: V3, d: V3, hb: Hitbox, maxT: number): number | null
   s = Math.max(0, Math.min(h, s));
   // Solve t for the clamped segment point.
   const t = (hb.x - o.x) * d.x + (hb.y + s - o.y) * d.y + (hb.z - o.z) * d.z;
-  if (t < 0 || t > maxT) return null;
   const px = o.x + d.x * t - hb.x, py = o.y + d.y * t - (hb.y + s), pz = o.z + d.z * t - hb.z;
   const dist2 = px * px + py * py + pz * pz;
   if (dist2 > hb.r * hb.r) return null;
-  return Math.max(0, t - Math.sqrt(hb.r * hb.r - dist2));
+  const half = Math.sqrt(hb.r * hb.r - dist2);
+  // Entry point must lie within the ray; a ray starting inside still hits at 0.
+  if (t + half < 0) return null;
+  const entry = Math.max(0, t - half);
+  return entry > maxT ? null : entry;
 }
 export function raySphere(o: V3, d: V3, cx: number, cy: number, cz: number, r: number, maxT: number): number | null {
   const lx = cx - o.x, ly = cy - o.y, lz = cz - o.z;

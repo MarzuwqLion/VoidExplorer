@@ -15,7 +15,7 @@ export default defineConfig({
     },
   },
   webServer: {
-    command: 'npx vite --port 5199 --strictPort',
+    command: 'npx cross-env E2E=1 vite --port 5199 --strictPort',
     url: 'http://localhost:5199/',
     reuseExistingServer: true,
     timeout: 120000,

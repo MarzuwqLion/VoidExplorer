@@ -27,6 +27,7 @@
 .hud-compass .mk.alloy { color: #9fb6d6; }
 .hud-compass .mk.biomass { color: #b9d65a; }
 .hud-compass .mk.isotopes { color: #c48cff; }
+.hud-compass .mk.enemy { color: #ff5a40; font-size: 0.85rem; }
 .hud-compass .center { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,0.35); }
 .hud-boss { position: absolute; top: 5.2rem; left: 50%; transform: translateX(-50%); width: 30rem; max-width: 40vw; display: none; text-align: center; }
 .hud-boss .nm { font-size: 0.85rem; letter-spacing: 0.25em; text-transform: uppercase; color: #ffb8a0; }

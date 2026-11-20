@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { PhysicsWorld } from './physics';
-import { buildLevel, type LevelData, type Prim } from './level';
+import { buildLevel, gateBlocker, openGate, type LevelData, type Prim } from './level';
 import { NavGrid } from '../ai/navgrid';
 import { PlayerController, type MoveMode, type PlayerCmd } from '../player/controller';
 import { CameraRig } from '../player/camera';
@@ -39,7 +39,7 @@ export class WalkWorld {
   readonly nav: NavGrid;
   readonly player: PlayerController;
   readonly cam = new CameraRig();
-  readonly interactables: Interactable[] = [];
+  interactables: Interactable[] = [];
   focus: Interactable | null = null;
   holdT = 0;
   readonly ground: (x: number, z: number) => number;
@@ -62,6 +62,7 @@ export class WalkWorld {
       blockers: this.level.blockers,
       walkSurfaces: this.level.walkSurfaces,
     });
+    for (const g of this.level.gates.values()) this.nav.setClosed(gateBlocker(g.prim), true);
     const sy = o.spawn.y ?? o.ground(o.spawn.x, o.spawn.z) + 0.05;
     this.player = new PlayerController(this.physics, o.spawn.x, sy, o.spawn.z, o.spawn.yaw, o.mode);
     this.cam.yaw = o.spawn.yaw;
@@ -150,6 +151,14 @@ export class WalkWorld {
       return true;
     }
     return false;
+  }
+
+  openGate(id: string): boolean {
+    return openGate(this.level, this.physics, id, this.nav);
+  }
+  gateOpen(id: string): boolean {
+    const g = this.level.gates.get(id);
+    return !!g && !g.collider;
   }
 
   /** Head position of the commander. */

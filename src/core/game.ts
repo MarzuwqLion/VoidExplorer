@@ -1,13 +1,18 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { FixedLoop } from './loop';
 import { Input } from './input';
 import { GameState, type SceneId } from './state';
 import { AudioEngine } from './audio';
 import { Emitter } from './events';
 import { loadSettings, saveSettings, saveGame, type Settings } from './save';
-import { SIM, RENDER, TRANSITIONS } from '../data/tuning';
+import { SIM, RENDER, TRANSITIONS, BLOOM } from '../data/tuning';
 import { UI } from '../ui/ui';
 import { openPause } from '../ui/menus';
+import { MenuList } from '../ui/screens';
 import type { Scene } from '../scenes/scene';
 import { initPhysics } from '../world/physics';
 
@@ -19,6 +24,9 @@ export interface GameEvents extends Record<string, unknown> {
 /** Owns the renderer, input, state, audio, UI and the current scene. */
 export class Game {
   readonly renderer: THREE.WebGLRenderer | null;
+  private composer: EffectComposer | null = null;
+  private renderPass: RenderPass | null = null;
+  bloom: UnrealBloomPass | null = null;
   readonly ui: UI;
   readonly input = new Input();
   readonly state = new GameState();
@@ -62,9 +70,28 @@ export class Game {
       this.webgl = false;
     }
     this.renderer = r;
+    if (r) {
+      r.info.autoReset = false;
+      this.composer = new EffectComposer(r);
+      this.renderPass = new RenderPass(new THREE.Scene(), new THREE.PerspectiveCamera());
+      this.composer.addPass(this.renderPass);
+      this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), BLOOM.strength, BLOOM.radius, BLOOM.threshold);
+      this.composer.addPass(this.bloom);
+      this.composer.addPass(new OutputPass());
+    }
     this.ui = new UI(uiRoot);
     this.loop = new FixedLoop(SIM.hz, (dt) => this.tick(dt), SIM.maxStepsPerFrame);
     this.applySettings();
+    MenuList.onTick = () => this.audio.play('ui_tick');
+  }
+
+  /** Gamepad rumble where supported. */
+  rumble(strong: number, weak: number, ms: number): void {
+    if (this.input.lastDevice !== 'pad' || typeof navigator === 'undefined' || !navigator.getGamepads) return;
+    for (const p of navigator.getGamepads()) {
+      const a = (p as unknown as { vibrationActuator?: { playEffect?: (t: string, o: object) => Promise<unknown> } } | null)?.vibrationActuator;
+      a?.playEffect?.('dual-rumble', { duration: ms, strongMagnitude: strong, weakMagnitude: weak })?.catch?.(() => undefined);
+    }
   }
 
   register(id: SceneId, f: SceneFactory): void {
@@ -111,6 +138,8 @@ export class Game {
   resize(): void {
     const w = window.innerWidth, h = window.innerHeight;
     this.renderer?.setSize(w, h, false);
+    this.composer?.setSize(w, h);
+    this.composer?.setPixelRatio(Math.min(window.devicePixelRatio || 1, RENDER.maxPixelRatio));
     if (this.scene) {
       this.scene.camera.aspect = w / h;
       this.scene.camera.updateProjectionMatrix();
@@ -170,7 +199,12 @@ export class Game {
     if (!this.scene) return;
     this.scene.render(alpha, dt * this.loop.timeScale);
     if (this.renderer) {
-      this.renderer.render(this.scene.three, this.scene.camera);
+      this.renderer.info.reset();
+      if (this.composer && this.renderPass && this.settings.bloom) {
+        this.renderPass.scene = this.scene.three;
+        this.renderPass.camera = this.scene.camera;
+        this.composer.render();
+      } else this.renderer.render(this.scene.three, this.scene.camera);
       this.drawCalls = this.renderer.info.render.calls;
     }
   }

@@ -255,6 +255,10 @@ export class SystemMapScene extends Scene {
     const res = this.sim.step(dt, input.move, input.down('boost'));
     if (res.newlySurveyed) {
       g.state.survey(res.newlySurveyed);
+      const n = this.surveyedCount();
+      if (n === 1) this.radio(...MAP_RADIO.firstSurvey);
+      else if (n === 15) this.radio(...MAP_RADIO.surveyedAll);
+      else if (res.newlySurveyed === 'goliath') this.radio(...MAP_RADIO.goliath);
       g.audio.play('scan_sweep');
       g.audio.play('scan_chime');
       g.ui.toast('Surveyed: ' + PLANET_BY_ID[res.newlySurveyed].name);
@@ -266,7 +270,13 @@ export class SystemMapScene extends Scene {
     }
     this.wasSunWarn = res.sunWarn;
     this.warn.style.display = res.sunWarn ? 'block' : 'none';
-    if (input.pressed('boost')) g.audio.play('ship_boost');
+    if (input.pressed('boost')) {
+      g.audio.play('ship_boost');
+      if (!g.state.flag('heardBoost')) {
+        g.state.setFlag('heardBoost');
+        this.radio(...MAP_RADIO.boost);
+      }
+    }
     // Zoom.
     if (input.pressed('zoomIn')) this.zoom /= MAP.zoomStep;
     if (input.pressed('zoomOut')) this.zoom *= MAP.zoomStep;

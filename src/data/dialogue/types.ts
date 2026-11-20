@@ -8,6 +8,8 @@ export interface Cond {
   any?: string[];
   choice?: [string, string];
   missions?: number;
+  /** At most this many missions complete. */
+  maxMissions?: number;
 }
 export interface Effect {
   setFlag?: string;
@@ -29,6 +31,8 @@ export interface DNode {
   text: string;
   next?: string;
   choices?: DChoice[];
+  /** Automatic branches tried in order when the line advances (first whose condition holds). */
+  branches?: { to: string; cond?: Cond }[];
   effects?: Effect[];
   end?: boolean;
 }

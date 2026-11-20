@@ -125,7 +125,7 @@ export function buildLevel(prims: Prim[], physics: PhysicsWorld, groundAt: (x: n
       const rot = p.rotY ?? 0;
       let col = null;
       if (solid) col = physics.addBox({ x: p.x, y: y + p.h / 2, z: p.z }, { x: p.w / 2, y: p.h / 2, z: p.d / 2 }, rot, { kind: tagKind, id: p.id, height: p.h });
-      if (p.id?.startsWith('gate')) gates.set(p.id, { prim: p, collider: col });
+      if (p.id?.startsWith('gate') || p.id?.startsWith('vault')) gates.set(p.id, { prim: p, collider: col });
       if (p.walk) {
         const c = Math.cos(rot), s = Math.sin(rot);
         walkSurfaces.push({
@@ -135,7 +135,7 @@ export function buildLevel(prims: Prim[], physics: PhysicsWorld, groundAt: (x: n
           },
           heightAt: () => y + p.h,
         });
-      } else if (solid && !p.noNav && p.h > 0.35) {
+      } else if (solid && !p.noNav && p.h > 0.35 && !p.id?.startsWith('gate') && !p.id?.startsWith('vault')) {
         blockers.push({ kind: 'rect', x: p.x, z: p.z, hw: p.w / 2, hd: p.d / 2, rotY: rot, id: p.id });
       }
       if (p.cover) covers.push({ x: p.x, z: p.z, y, hw: p.w / 2, hd: p.d / 2, rotY: rot, h: p.h, id: p.id });
@@ -163,11 +163,15 @@ export function quatYawPitch(yaw: number, pitch: number): { x: number; y: number
   return { x: cy * sp, y: sy * cp, z: -sy * sp, w: cy * cp };
 }
 
-/** Open a gate: remove its collider. */
-export function openGate(level: LevelData, physics: PhysicsWorld, id: string): boolean {
+/** Open a gate: remove its collider and reopen its nav cells. */
+export function openGate(level: LevelData, physics: PhysicsWorld, id: string, nav?: import('../ai/navgrid').NavGrid): boolean {
   const g = level.gates.get(id);
   if (!g || !g.collider) return false;
   physics.remove(g.collider);
   g.collider = null;
+  nav?.setClosed(gateBlocker(g.prim), false);
   return true;
+}
+export function gateBlocker(p: BoxPrim): import('../ai/navgrid').NavBlocker {
+  return { kind: 'rect', x: p.x, z: p.z, hw: p.w / 2, hd: p.d / 2, rotY: p.rotY ?? 0 };
 }

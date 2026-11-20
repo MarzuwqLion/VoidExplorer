@@ -9,6 +9,7 @@ export function checkCond(c: Cond | undefined, s: GameState): boolean {
   if (c.any && !c.any.some((f) => s.flag(f))) return false;
   if (c.choice && s.data.choices[c.choice[0]] !== c.choice[1]) return false;
   if (c.missions !== undefined && s.missionsDone() < c.missions) return false;
+  if (c.maxMissions !== undefined && s.missionsDone() > c.maxMissions) return false;
   return true;
 }
 
@@ -54,7 +55,9 @@ export class DialogueRunner {
   /** Advance a line without choices. */
   advance(): void {
     if (!this.node || this.choices().length) return;
-    if (this.node.end || !this.node.next) this.goto(END);
+    const br = this.node.branches?.find((b) => checkCond(b.cond, this.state));
+    if (br) this.goto(br.to);
+    else if (this.node.end || !this.node.next) this.goto(END);
     else this.goto(this.node.next);
   }
   choose(i: number): void {

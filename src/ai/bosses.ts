@@ -11,9 +11,19 @@ function spawnAdds(d: Director, e: Enemy, types: EnemyType[], radius: number): v
   const p = d.player;
   types.forEach((t, i) => {
     const away = Math.atan2(e.pos.z - p.z, e.pos.x - p.x);
-    const a = away + (i - (types.length - 1) / 2) * 0.7;
-    const x = e.pos.x + Math.cos(a) * radius, z = e.pos.z + Math.sin(a) * radius;
-    d.spawn(t, x, z, { encounter: e.encounter ?? undefined, alerted: true });
+    // Try angles and radii until the spot is reachable from the boss.
+    for (let k = 0; k < 12; k++) {
+      const a = away + (i - (types.length - 1) / 2) * 0.7 + k * 0.5;
+      const r = radius * (1 - (k % 3) * 0.25);
+      const x = e.pos.x + Math.cos(a) * r, z = e.pos.z + Math.sin(a) * r;
+      const q = d.world.nav.nearestWalkable(x, z, 3);
+      if (!q) continue;
+      const path = d.world.nav.findPath(e.pos, q, 20000);
+      if (!path || Math.abs(d.world.nav.heightAt(q.x, q.z) - e.pos.y) > 3) continue;
+      d.spawn(t, q.x, q.z, { encounter: e.encounter ?? undefined, alerted: true });
+      return;
+    }
+    d.spawn(t, e.pos.x, e.pos.z, { encounter: e.encounter ?? undefined, alerted: true });
   });
 }
 
@@ -63,8 +73,12 @@ export function alphaBrain(e: Enemy, d: Director, dt: number): void {
       e.glow = 1;
       const step = ALPHA.chargeSpeed * dt;
       const fx = e.mem.cx, fz = e.mem.cz;
-      // Pillar ahead? Stun.
-      const ray = d.world.physics.ray({ x: e.pos.x, y: e.pos.y + 1.2, z: e.pos.z }, { x: fx, y: 0, z: fz }, e.radius + step + 0.3);
+      // Pillar ahead across the Alpha's width? Stun.
+      let ray = null;
+      for (const off of [0, -0.9, 0.9]) {
+        const r = d.world.physics.ray({ x: e.pos.x - fz * off, y: e.pos.y + 1.2, z: e.pos.z + fx * off }, { x: fx, y: 0, z: fz }, e.radius + step + 0.3);
+        if (r && (!ray || r.tag?.id?.startsWith('pillar'))) ray = r;
+      }
       if (ray && ray.tag?.id?.startsWith('pillar')) {
         e.setState('stunned');
         e.stunned = true;
@@ -245,7 +259,7 @@ export function foremanBrain(e: Enemy, d: Director, dt: number): void {
     d.face(e, p.x, p.z, dt, 2);
   }
   if (e.state !== 'walk') e.setState('walk');
-  if (e.stateT >= FOREMAN.burstCooldown && e.seesPlayer) {
+  if (e.stateT >= FOREMAN.burstCooldown && (e.seesPlayer || e.sinceSeen < 4)) {
     e.setState('spinup');
     d.sound('foreman_spinup', e.pos);
   }

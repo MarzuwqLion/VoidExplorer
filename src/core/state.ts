@@ -88,6 +88,7 @@ export class GameState {
   survey(id: string): boolean {
     if (this.data.surveyed.includes(id)) return false;
     this.data.surveyed.push(id);
+    if (this.data.surveyed.length >= 15) this.setFlag('surveyedAll');
     return true;
   }
   missionsDone(): number {

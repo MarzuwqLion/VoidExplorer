@@ -169,6 +169,9 @@ export const TRANSITIONS = { landing: 4, takeoff: 3, fade: 0.4, introCard: 9 };
 /** Rendering budget. */
 export const RENDER = { maxPixelRatio: 1.5, shadowMapSize: 2048, maxDrawCalls: 300, maxActiveEnemies: 12 };
 
+/** Bloom post-processing. */
+export const BLOOM = { strength: 0.45, radius: 0.35, threshold: 0.82 };
+
 /** Text typing speed for dialogue (chars per second). */
 export const DIALOGUE = { charsPerSecond: 60 };
 

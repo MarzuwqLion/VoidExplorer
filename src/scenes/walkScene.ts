@@ -106,6 +106,7 @@ export abstract class WalkScene extends Scene {
     this.world.stepPlayer(dt, this.world.cmdFromInput(input, extra));
     if (!this.dialogue) this.world.updateInteract(input, dt);
     this.postStep(dt);
+    this.stepSounds();
     // Objective and prompt.
     const o = this.objective();
     const p = this.world.player.pos;
@@ -116,6 +117,27 @@ export abstract class WalkScene extends Scene {
     if (input.pressed('objectives')) this.logOpen = !this.logOpen;
     this.hud.setLog(this.logOpen, 'Objectives', o.log ?? [{ text: o.text, done: false }]);
     this.hud.update(dt);
+  }
+
+  private lastStep = 0;
+  private wasRoll = false;
+  /** Surface sound for footsteps in this scene. */
+  protected footstep(): import('../data/sounds').SoundId {
+    return 'footstep_metal';
+  }
+  protected stepSounds(): void {
+    const p = this.world.player;
+    const stride = p.sprinting ? 1.6 : 1.1;
+    if (p.state === 'move' && p.grounded && p.odometer - this.lastStep > stride) {
+      this.lastStep = p.odometer;
+      this.game.audio.play(this.footstep(), { volume: p.crouched ? 0.5 : p.sprinting ? 1.3 : 1 });
+    }
+    const roll = p.state === 'roll';
+    if (roll && !this.wasRoll) this.onRollStart();
+    this.wasRoll = roll;
+  }
+  protected onRollStart(): void {
+    this.game.audio.play('roll');
   }
 
   protected lookSlowdown(): boolean {

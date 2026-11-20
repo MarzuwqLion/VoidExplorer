@@ -33,6 +33,7 @@ export interface Settings {
   ambient: number;
   music: number;
   shake: boolean;
+  bloom: boolean;
 }
 export const DEFAULT_SETTINGS: Settings = {
   mouseSens: 1,
@@ -43,6 +44,7 @@ export const DEFAULT_SETTINGS: Settings = {
   ambient: 0.7,
   music: 0.6,
   shake: true,
+  bloom: true,
 };
 export function loadSettings(): Settings {
   try {

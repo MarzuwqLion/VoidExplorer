@@ -60,6 +60,7 @@ export function openSettings(game: Game): void {
         { label: 'Ambient volume', slider: { get: () => s.ambient, set: (v) => ((s.ambient = v), apply()), min: 0, max: 1, step: 0.05, fmt: pct } },
         { label: 'Music volume', slider: { get: () => s.music, set: (v) => ((s.music = v), apply()), min: 0, max: 1, step: 0.05, fmt: pct } },
         { label: 'Screen shake', toggle: { get: () => s.shake, set: (v) => ((s.shake = v), apply()) } },
+        { label: 'Bloom', toggle: { get: () => s.bloom, set: (v) => ((s.bloom = v), apply()) } },
         { label: 'Back', action: () => game.ui.pop() },
       ],
       () => game.ui.pop(),

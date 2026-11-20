@@ -13,6 +13,8 @@ export interface EncounterDef {
   id: string;
   /** Player entering this circle starts the encounter. */
   trigger: { x: number; z: number; r: number };
+  /** Extra trigger circles (e.g. a shortcut entrance). */
+  alt?: { x: number; z: number; r: number }[];
   waves: SpawnDef[][];
   /** Next wave spawns when this many or fewer of the current wave remain. */
   nextWaveAt?: number;
