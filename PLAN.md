@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: M3 Weapons — weapon state/firing in a CombatSystem shared by gym and planet, dummies, HUD and hit feedback.
+Next up: M4 Enemies — nav-grid agents, perception, cover points, attack tokens, 5 standard enemy brains, encounter director, sims.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -13,10 +13,10 @@ Next up: M3 Weapons — weapon state/firing in a CombatSystem shared by gym and 
   - [x] unit tests: move speeds, roll distance, invulnerability window
   - [x] scripted camera-into-walls test never passes through
   - [x] screenshots: default, aiming, roadie run, crouch framing
-- [ ] M3 Weapons
-  - [ ] unit tests: shots-to-kill and falloff
-  - [ ] scripted test kills a dummy with each weapon
-  - [ ] HUD screenshot reviewed
+- [x] M3 Weapons
+  - [x] unit tests: shots-to-kill and falloff
+  - [x] scripted test kills a dummy with each weapon
+  - [x] HUD screenshot reviewed
 - [ ] M4 Enemies
   - [ ] each enemy type paths to player or cover; riflemen reach cover points
   - [ ] stationary player vs five riflemen dies in 5-15 s

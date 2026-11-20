@@ -55,6 +55,7 @@ export class Input {
   private padPrevMenuY = 0;
   private detach: (() => void) | null = null;
   pointerLocked = false;
+  private lookVirtual: Vec2 = { x: 0, y: 0 };
 
   constructor() {
     for (const a of ACTIONS) this.states.set(a, { down: false, pressed: false, released: false, held: 0 });
@@ -195,6 +196,9 @@ export class Input {
     }
     this.move = { x: mx, y: my };
     this.mouse = { x: this.mouseDX, y: this.mouseDY };
+    // Injected look is one-shot: degrees for this step only.
+    this.lookVirtual = this.virtual.look;
+    this.virtual.look = { x: 0, y: 0 };
     this.mouseDX = 0;
     this.mouseDY = 0;
   }
@@ -205,8 +209,8 @@ export class Input {
     const mk = FEEL.mouseDegPerPx * this.settings.mouseSens * (aiming ? FEEL.mouseAimMul : 1);
     const pk = this.settings.padSens * (aiming ? FEEL.padAimMul : 1) * (slowdown ? FEEL.padSlowdown : 1);
     return {
-      x: this.mouse.x * mk + this.padLook.x * FEEL.padYawSpeed * pk * dt + this.virtual.look.x,
-      y: (-this.mouse.y * mk + this.padLook.y * FEEL.padPitchSpeed * pk * dt) * inv + this.virtual.look.y,
+      x: this.mouse.x * mk + this.padLook.x * FEEL.padYawSpeed * pk * dt + this.lookVirtual.x,
+      y: (-this.mouse.y * mk + this.padLook.y * FEEL.padPitchSpeed * pk * dt) * inv + this.lookVirtual.y,
     };
   }
 

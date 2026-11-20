@@ -6,8 +6,8 @@ import type { WeaponId } from '../../data/names';
 export function buildWeapon(id: WeaponId): THREE.Group {
   const g = new THREE.Group();
   g.name = id;
-  const body = mat(0x2a2e33, { rough: 0.5, metal: 0.5 });
-  const accent = mat(0x5a6068, { rough: 0.5, metal: 0.4 });
+  const body = mat(0x4a525c, { rough: 0.45, metal: 0.5 });
+  const accent = mat(0x8a929c, { rough: 0.5, metal: 0.4 });
   const amber = glow(0xffa53a, 1.5);
   const muzzle = new THREE.Object3D();
   muzzle.name = 'muzzle';
@@ -47,6 +47,7 @@ export function buildWeapon(id: WeaponId): THREE.Group {
     muzzle.position.set(0, 0.04, -0.71);
   }
   g.add(muzzle);
+  g.scale.setScalar(1.25);
   g.traverse((o) => ((o as THREE.Mesh).castShadow = true));
   return g;
 }

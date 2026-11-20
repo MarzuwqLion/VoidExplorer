@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { WalkScene } from './walkScene';
+import { FieldScene } from './fieldScene';
 import { WalkWorld } from '../world/walkWorld';
 import { buildLevelView } from '../world/levelView';
 import { terrainArrays, buildTerrainMesh } from '../world/terrain';
@@ -12,7 +12,7 @@ import type { Mission, PlanetLevel } from '../missions/types';
 import { createPlanet } from '../missions/registry';
 
 /** A landable planet: terrain, mission, shuttle, and (from M3) combat. */
-export class PlanetScene extends WalkScene {
+export class PlanetScene extends FieldScene {
   readonly id = 'planet' as const;
   protected armed = true;
   protected helmet = true;
@@ -41,7 +41,7 @@ export class PlanetScene extends WalkScene {
       mode: 'field',
       addColliders: (ph) => ph.addTrimesh(arrays.verts, arrays.idx, { kind: 'terrain' }),
     });
-    this.setupWalk(world);
+    this.setupField(world);
     this.mission = mission(this);
     this.lastInside.copy(world.player.pos);
     // Visuals.
@@ -139,6 +139,7 @@ export class PlanetScene extends WalkScene {
   }
 
   protected postStep(dt: number): void {
+    super.postStep(dt);
     const sh = this.world.interactables.find((i) => i.id === 'shuttle');
     if (sh) sh.label = this.mission.complete ? 'Extract' : 'Abort mission';
     this.mission.update(dt);
