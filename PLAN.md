@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: M5 Bridge and crew — dialogue graph test, crew e2e (talk to each + buy upgrade), bridge + dialogue camera screenshots. Most bridge code exists from M1.
+Next up: M6 System map — panel test for all 16 bodies, inputs-only flight, abort round trip, map screenshots.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -22,10 +22,10 @@ Next up: M5 Bridge and crew — dialogue graph test, crew e2e (talk to each + bu
   - [x] stationary player vs five riflemen dies in 5-15 s
   - [x] hold-fire stand-in kills one of each type in expected shots
   - [x] 5-minute sim: no NaN, no entities outside level
-- [ ] M5 Bridge and crew
-  - [ ] dialogue graph test passes
-  - [ ] e2e talks to each crew member and buys an upgrade
-  - [ ] screenshots: bridge, dialogue camera
+- [x] M5 Bridge and crew
+  - [x] dialogue graph test passes
+  - [x] e2e talks to each crew member and buys an upgrade
+  - [x] screenshots: bridge, dialogue camera
 - [ ] M6 System map
   - [ ] ship beside sun and each planet: panel name/class, only Amara and Korr offer Land
   - [ ] fly to a planet using inputs only

@@ -116,6 +116,14 @@ export class DialogueView {
       if (input.pressed('menuUp')) this.highlight((this.sel + this.buttons.length - 1) % this.buttons.length);
       if (input.pressed('menuDown')) this.highlight((this.sel + 1) % this.buttons.length);
     }
+    if (input.pressed('back') && this.buttons.length) {
+      input.consume('back');
+      const i = this.runner.choices().findIndex((c) => c.label === 'Goodbye');
+      if (i >= 0) {
+        this.pick(i);
+        return;
+      }
+    }
     if (input.pressed('confirm') || input.pressed('interact')) {
       input.consume('confirm');
       input.consume('interact');
