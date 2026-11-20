@@ -1,10 +1,10 @@
 # PLAN
 
-Next up: M0 Foundation — scaffold Vite + strict TS, core loop, input, state, debug API, title screen.
+Next up: M1 Walking skeleton — bridge room + capsule, system map with 15 spheres, planet flat fields, full-loop test.
 
-- [ ] M0 Foundation
-  - [ ] e2e loads title screen, screenshot not blank
-  - [ ] unit tests: fixed-step loop, input mapping
+- [x] M0 Foundation
+  - [x] e2e loads title screen, screenshot not blank
+  - [x] unit tests: fixed-step loop, input mapping
 - [ ] M1 Walking skeleton
   - [ ] full-loop test passes in both planet orders (input layer + debug API)
   - [ ] planet data test: 15 entries, exactly 2 landable

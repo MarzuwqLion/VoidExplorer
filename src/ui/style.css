@@ -1,0 +1,55 @@
+:root {
+  --amber: #f2a541;
+  --amber-dim: #a06a22;
+  --ink: #e6edf3;
+  --ink-dim: #93a3b3;
+  --panel: rgba(10, 16, 24, 0.78);
+  --panel-edge: rgba(242, 165, 65, 0.35);
+  --red: #ff4d4d;
+  --shield: #5cc8ff;
+  --health: #e8e8e8;
+  --good: #7be38a;
+  font-size: max(11px, calc(100vh / 54));
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu, sans-serif; color: var(--ink); user-select: none; }
+#app { position: fixed; inset: 0; }
+#view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#ui { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+#ui .layer { position: absolute; inset: 0; pointer-events: none; }
+#ui .interactive, #ui button, #ui input { pointer-events: auto; }
+
+.fade { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity 0.4s linear; pointer-events: none; }
+.fade.on { opacity: 1; }
+
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; }
+.screen.dim { background: rgba(2, 5, 10, 0.72); }
+.screen h1 { font-size: 4.2rem; letter-spacing: 0.35em; margin: 0 0 0.2em; font-weight: 300; text-indent: 0.35em; }
+.screen h2 { font-size: 1.8rem; letter-spacing: 0.2em; font-weight: 400; margin: 0 0 1.2rem; color: var(--amber); text-transform: uppercase; }
+.screen .sub { color: var(--ink-dim); font-size: 1rem; letter-spacing: 0.25em; margin-bottom: 2.4rem; text-transform: uppercase; }
+.menu { display: flex; flex-direction: column; gap: 0.35rem; min-width: 18rem; }
+.menu .item { font: inherit; font-size: 1.25rem; padding: 0.5rem 1.2rem; background: transparent; color: var(--ink); border: 1px solid transparent; text-align: left; cursor: pointer; letter-spacing: 0.08em; }
+.menu .item.sel { border-color: var(--panel-edge); background: rgba(242, 165, 65, 0.12); color: #fff; }
+.menu .item.sel::before { content: '\25B8  '; color: var(--amber); }
+.menu .item:disabled { color: #56606a; cursor: default; }
+.menu .row { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; }
+.menu .row input[type=range] { width: 11rem; accent-color: var(--amber); }
+.menu .row .val { min-width: 3rem; text-align: right; color: var(--ink-dim); }
+.hintbar { position: absolute; bottom: 2rem; left: 0; right: 0; text-align: center; color: var(--ink-dim); font-size: 0.9rem; letter-spacing: 0.1em; }
+.controls-grid { display: grid; grid-template-columns: auto auto auto; gap: 0.2rem 2.2rem; font-size: 0.95rem; background: var(--panel); padding: 1.2rem 1.8rem; border: 1px solid var(--panel-edge); max-height: 70vh; overflow: auto; }
+.controls-grid .h { color: var(--amber); text-transform: uppercase; letter-spacing: 0.12em; padding-bottom: 0.4rem; }
+.controls-grid .k { color: var(--ink); }
+.controls-grid .a { color: var(--ink-dim); }
+
+.toasts { position: absolute; right: 2rem; bottom: 9rem; display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
+.toast { background: var(--panel); border-left: 3px solid var(--amber); padding: 0.35rem 0.8rem; font-size: 1rem; animation: toastIn 0.2s ease-out; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(1rem); } to { opacity: 1; transform: none; } }
+
+.card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: radial-gradient(ellipse at center, rgba(0,0,0,0.25), rgba(0,0,0,0.75)); }
+.card p { font-size: 1.5rem; max-width: 42rem; line-height: 1.5; margin: 0.4rem 0; opacity: 0; animation: fadeIn 1s forwards; }
+.card .title { font-size: 2.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--amber); }
+.card .skip { position: absolute; bottom: 2rem; color: var(--ink-dim); font-size: 0.9rem; letter-spacing: 0.1em; }
+@keyframes fadeIn { to { opacity: 1; } }
+
+.resume { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.55); font-size: 1.6rem; letter-spacing: 0.2em; pointer-events: auto; cursor: pointer; }
