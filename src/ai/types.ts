@@ -52,17 +52,10 @@ export function rayHitbox(o: V3, d: V3, hb: Hitbox, maxT: number): number | null
   const dd = wx * d.x + wy * d.y + wz * d.z;
   const e = wy;
   const denom = 1 - b * b;
-  let t: number, s: number;
-  if (denom < 1e-6) {
-    t = 0;
-    s = e;
-  } else {
-    t = (b * e - dd) / denom;
-    s = (e - b * dd) / denom;
-  }
+  let s = denom < 1e-6 ? e : (e - b * dd) / denom;
   s = Math.max(0, Math.min(h, s));
-  // Re-solve t for the clamped s.
-  t = (hb.x - o.x) * d.x + (hb.y + s - o.y) * d.y + (hb.z - o.z) * d.z;
+  // Solve t for the clamped segment point.
+  const t = (hb.x - o.x) * d.x + (hb.y + s - o.y) * d.y + (hb.z - o.z) * d.z;
   if (t < 0 || t > maxT) return null;
   const px = o.x + d.x * t - hb.x, py = o.y + d.y * t - (hb.y + s), pz = o.z + d.z * t - hb.z;
   const dist2 = px * px + py * py + pz * pz;

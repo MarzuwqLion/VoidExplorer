@@ -181,8 +181,8 @@ export class Combat {
     if (input.pressed('weapon1')) this.swapTo('pistol');
     if (input.pressed('weapon2')) this.swapTo('smg');
     if (input.pressed('weapon3')) this.swapTo('rifle');
-    if (input.pressed('nextWeapon')) ws.next(1) && this.events.emit('sound', { id: 'swap' });
-    if (input.pressed('prevWeapon')) ws.next(-1) && this.events.emit('sound', { id: 'swap' });
+    if (input.pressed('nextWeapon') && ws.next(1)) this.events.emit('sound', { id: 'swap' });
+    if (input.pressed('prevWeapon') && ws.next(-1)) this.events.emit('sound', { id: 'swap' });
     if (input.pressed('reload') && ws.startReload()) this.events.emit('sound', { id: ws.def.reloadSound });
     if (input.pressed('melee') && p.startMelee()) {
       ws.cancelReload();
