@@ -27,3 +27,4 @@ Format: what — why — how to reverse.
 - Draw-call budget: rigs fold hands, feet, neck and shoulder pads into their parent joints, each joint's parts merge into one vertex-coloured mesh, only the largest two parts of an enemy cast shadows, and enemies beyond 18 m swap to a single baked mesh. Busy moments measured at bridge 201, Amara 232, Korr 269 (including shadow and bloom passes). — Reverse: src/world/models/optimize.ts and LOD_DIST in src/ai/enemyViews.ts.
 - Korr gets a soft suit lamp following the commander so the dusk interiors stay readable. — Reverse: PlanetScene.enter.
 - Lights are disposed with their scene (shadow maps), which removed a texture leak across scene changes. — Reverse: disposeObject in src/scenes/scene.ts.
+- A NaN-guard pass runs before bloom so a single non-finite pixel cannot black out the frame. — Reverse: NAN_GUARD in src/core/game.ts.

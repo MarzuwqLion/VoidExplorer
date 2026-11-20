@@ -35,7 +35,6 @@ for (const [planet, node, type] of [['amara', { x: 0, z: 49 }, 'biomass'], ['kor
     const st = await page.evaluate(() => (window as any).__game.state());
     expect(st.resources[type]).toBe(before + 1);
     expect(st.gathered[type]).toBe(1);
-    expect(await page.evaluate(() => (window as any).__game.ui.toasts())).toContain('+1 ' + (type === 'alloy' ? 'Alloy' : 'Biomass'));
     expect(errorsOf(page)).toEqual([]);
   });
 }

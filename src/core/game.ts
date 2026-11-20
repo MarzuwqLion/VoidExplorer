@@ -3,6 +3,17 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+
+/** Replaces NaN or infinite pixels with black so one bad pixel cannot be blurred across the frame by bloom. */
+const NAN_GUARD = {
+  uniforms: { tDiffuse: { value: null } },
+  vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader:
+    'uniform sampler2D tDiffuse; varying vec2 vUv; void main() { vec4 c = texture2D(tDiffuse, vUv); ' +
+    'bvec4 bad = bvec4(isnan(c.r) || isinf(c.r), isnan(c.g) || isinf(c.g), isnan(c.b) || isinf(c.b), isnan(c.a) || isinf(c.a)); ' +
+    'gl_FragColor = any(bad) ? vec4(0.0, 0.0, 0.0, 1.0) : max(c, vec4(0.0)); }',
+};
 import { FixedLoop } from './loop';
 import { Input } from './input';
 import { GameState, type SceneId } from './state';
@@ -75,6 +86,7 @@ export class Game {
       this.composer = new EffectComposer(r);
       this.renderPass = new RenderPass(new THREE.Scene(), new THREE.PerspectiveCamera());
       this.composer.addPass(this.renderPass);
+      this.composer.addPass(new ShaderPass(NAN_GUARD));
       this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), BLOOM.strength, BLOOM.radius, BLOOM.threshold);
       this.composer.addPass(this.bloom);
       this.composer.addPass(new OutputPass());
