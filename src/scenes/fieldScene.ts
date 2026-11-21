@@ -5,7 +5,7 @@ import { Combat } from '../world/combat';
 import { Fx } from '../world/fx';
 import { rng } from '../core/rng';
 import { WEAPONS, WEAPON_ORDER } from '../data/weapons';
-import { FEEL } from '../data/tuning';
+import { FEEL, SHAKE } from '../data/tuning';
 import type { PlayerCmd } from '../player/controller';
 import type { Damageable } from '../ai/types';
 import type { SoundId } from '../data/sounds';
@@ -66,7 +66,7 @@ export abstract class FieldScene extends WalkScene {
       this.hud.damageFrom(ang - heading);
       this.hud.flashColor(e.shield ? 'rgba(92,200,255,0.5)' : 'rgba(255,40,30,0.55)');
       this.hitReact = 1;
-      if (g.settings.shake) world.cam.addShake(0.25);
+      if (g.settings.shake) world.cam.addShake(e.shield ? SHAKE.hitShield : SHAKE.hitHealth);
       const chest = world.chest();
       this.fx.burst(chest, 8, e.shield ? 0x5cc8ff : 0xff4030, 2.5, 0.3, 0, 0.5);
       g.rumble(e.shield ? 0.2 : 0.6, 0.4, 120);
@@ -86,7 +86,11 @@ export abstract class FieldScene extends WalkScene {
     d.events.on('splash', (p) => this.fx.burst(p, 24, 0x9aff40, 5, 0.6, -8, 1));
     d.events.on('blast', (p) => {
       this.fx.burst(p, 40, 0xffa040, 9, 0.7, -10, 1.2);
-      if (g.settings.shake) world.cam.addShake(0.4);
+    });
+    d.events.on('quake', (q) => {
+      const p = world.player.pos;
+      const k = Math.max(0, 1 - Math.hypot(q.pos.x - p.x, q.pos.z - p.z) / SHAKE.quakeRadius);
+      if (g.settings.shake && k > 0) world.cam.addShake(q.amount * k);
     });
     d.events.on('pickup', (k) => {
       g.ui.toast('+' + k.amount + ' ' + WDEFS[k.kind].name + ' rounds');
@@ -182,7 +186,7 @@ export abstract class FieldScene extends WalkScene {
     const fov = this.world.cam.fov;
     const gap = (Math.tan(((c.crosshairSpread() / 2) * Math.PI) / 180) / Math.tan(((fov / 2) * Math.PI) / 180)) * (window.innerHeight / 2) + 4;
     const p = this.world.player;
-    hud.setCrosshair(gap, !this.dialogue && !c.dead && p.state !== 'roll', c.aimBlocked);
+    hud.setCrosshair(gap, !this.dialogue && !c.dead && p.state !== 'roll' && !p.sprinting, c.aimBlocked);
     hud.setHint(c.dead || this.dialogue ? '' : c.reloadHint());
     const low = c.lowHealth;
     hud.setLowHealth(low);

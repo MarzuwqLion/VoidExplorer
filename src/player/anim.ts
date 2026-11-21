@@ -1,4 +1,5 @@
 import type { Pose } from '../world/models/humanoid';
+import { ROADIE } from '../data/tuning';
 
 export interface CommanderAnim {
   t: number;
@@ -21,6 +22,8 @@ export interface CommanderAnim {
   harvest: number;
   recoil: number;
   heavy: boolean;
+  /** Turn rate (rad/s, positive turning left), for leaning into roadie-run turns. */
+  turn?: number;
 }
 
 const sin = Math.sin, cos = Math.cos, PI = Math.PI;
@@ -42,21 +45,31 @@ export function legs(phase: number, amp: number, crouch: number): Pose {
 
 /** Commander pose from controller and weapon state. */
 export function commanderPose(a: CommanderAnim): Pose {
-  const stride = a.sprint > 0.5 ? 2.4 : a.speed > 3 ? 1.9 : 1.3;
+  const sp = a.sprint;
+  const stride = sp > 0.5 ? ROADIE.stride : a.speed > 3 ? 1.9 : 1.3;
   const phase = (a.dist / stride) * PI * 2;
   const amp = Math.min(0.95, a.speed * 0.13) * (1 - a.crouch * 0.45);
   const breathe = sin(a.t * 1.7) * 0.025;
-  const bob = Math.abs(sin(phase)) * Math.min(0.05, a.speed * 0.008);
-  const p: Pose = { ...legs(phase, amp, a.crouch), lift: -a.crouch * 0.4 + bob - 0.02 };
-  const hunch = a.sprint * 0.35 + a.crouch * 0.25;
-  const pitchLean = -a.aimPitch * (Math.PI / 180) * 0.6 * a.aim;
-  p.torso = [hunch * 0.6 + breathe, 0, 0];
-  p.chest = [hunch * 0.4 + pitchLean * 0.5 - a.recoil * 0.08, 0, 0];
-  p.neck = [-hunch * 0.6 + pitchLean * 0.5, 0, 0];
+  const bob = Math.abs(sin(phase)) * Math.min(0.05 + sp * 0.015, a.speed * 0.01);
+  // Roadie run: low, hunched charge with high knees, rocking shoulders and the weapon held low across the chest.
+  const p: Pose = { ...legs(phase, amp, a.crouch), lift: -a.crouch * 0.4 + bob - 0.02 - sp * ROADIE.drop };
+  if (sp > 0) {
+    p.lowerLegL![0] *= 1 + ROADIE.knee * sp;
+    p.lowerLegR![0] *= 1 + ROADIE.knee * sp;
+    p.upperLegL![0] += 0.12 * sp;
+    p.upperLegR![0] += 0.12 * sp;
+    p.roll = Math.max(-ROADIE.maxLean, Math.min(ROADIE.maxLean, (a.turn ?? 0) * ROADIE.turnLean)) * sp;
+  }
+  // Joint x rotation: positive tips the upper body back (the rig faces -z), negative hunches it forward.
+  const hunch = sp * ROADIE.hunch + a.crouch * 0.25;
+  const pitchLean = a.aimPitch * (Math.PI / 180) * 0.6 * a.aim;
+  p.torso = [-hunch * 0.6 + breathe, sin(phase) * ROADIE.twist * sp, 0];
+  p.chest = [-hunch * 0.4 + pitchLean * 0.5 + a.recoil * 0.08, 0, sin(phase) * ROADIE.rock * sp];
+  p.neck = [sp * ROADIE.neck + a.crouch * 0.15 + pitchLean * 0.5, 0, 0];
   p.head = [0, 0, 0];
   if (a.armed) {
     // Two-handed hold, raised to the shoulder when aiming.
-    const up = 0.5 + a.aim * 0.75 - a.sprint * 0.25;
+    const up = 0.5 + a.aim * 0.75 - sp * 0.3;
     p.upperArmR = [up + a.recoil * 0.12, 0, -0.18];
     p.lowerArmR = [1.25 - a.aim * 0.35, 0, 0];
     p.upperArmL = [up + 0.35, 0, 0.55];
@@ -87,7 +100,7 @@ export function commanderPose(a: CommanderAnim): Pose {
     if (a.harvest > 0) {
       p.upperArmL = [1.45, 0, 0.1];
       p.lowerArmL = [0.15, 0, 0];
-      p.head = [0.2, 0, 0];
+      p.head = [-0.25, 0, 0];
     }
   } else {
     // Relaxed arms swinging opposite the legs.
@@ -98,8 +111,8 @@ export function commanderPose(a: CommanderAnim): Pose {
     p.lowerArmR = [0.2 + amp * 0.3, 0, 0];
   }
   if (a.hit > 0) {
-    p.chest![0] -= a.hit * 0.3;
-    p.head![0] -= a.hit * 0.25;
+    p.chest![0] += a.hit * 0.3;
+    p.head![0] += a.hit * 0.25;
   }
   if (a.roll > 0) {
     const r = a.roll;

@@ -34,6 +34,32 @@ async function lineup(page: Page, names: string[], cam: [number, number, number]
   await step(page, 0.3);
 }
 
+test('roadie run: hunched, low and leaning, seen from the side and from the run camera', async ({ page }) => {
+  await boot(page);
+  await gotoScene(page, 'gym');
+  await step(page, 0.5);
+  await page.evaluate(() => { const g = (window as any).__game; g.input.move(0, 1); g.input.hold('sprint'); });
+  await step(page, 0.9);
+  expect(await page.evaluate(() => (window as any).__game.info().sprinting)).toBe(true);
+  await page.waitForTimeout(150);
+  await shot(page, 'M15/roadie-run-camera.png');
+  await page.evaluate(() => {
+    const g = (window as any).__game;
+    const sc = g.game.scene;
+    const apply = sc.world.cam.apply.bind(sc.world.cam);
+    sc.world.cam.apply = (c: any, a: number) => {
+      apply(c, a);
+      const p = sc.world.player.pos;
+      const f = sc.world.player.facing;
+      c.position.set(p.x + Math.cos(f) * 3.2, p.y + 1.0, p.z - Math.sin(f) * 3.2);
+      c.lookAt(p.x, p.y + 0.9, p.z);
+    };
+  });
+  await step(page, 0.2);
+  await shot(page, 'M15/roadie-run-side.png');
+  expect(errorsOf(page)).toEqual([]);
+});
+
 test('character lineup: full bodies and faces render with detail', async ({ page }) => {
   await boot(page);
   await gotoScene(page, 'bridge');

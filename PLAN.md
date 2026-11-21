@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: Done. M0 to M14 ticked. Owner playtest per README checklist.
+Next up: Done. M0 to M15 ticked. Owner playtest per README checklist.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -71,3 +71,7 @@ Next up: Done. M0 to M14 ticked. Owner playtest per README checklist.
   - [x] uniform details and a signature item per crew member and planet character; armour plates for the commander and raiders
   - [x] blinking, head tracking and brow movement in conversation; dialogue key and rim light
   - [x] draw calls within budget; unit tests for rig parts and finite geometry; dialogue screenshots reviewed
+- [x] M15 Screen shake and roadie run (owner request)
+  - [x] smooth trauma shake, stronger weapon and hit kicks, distance-scaled quakes from bosses and blasts
+  - [x] roadie run camera (low, close, footfall bob, sway, handheld shake) and hunched pose with turn lean; pose sign fix
+  - [x] unit tests for hunch, drop, turn lean and trauma; side and camera screenshots reviewed; full suite green

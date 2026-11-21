@@ -22,13 +22,19 @@ export const FEEL = {
   /** Time to blend into aim framing (s). */
   aimBlend: 0.15,
   /** Roadie run camera distance behind (m). */
-  runBehind: 2.2,
-  /** Roadie run camera height (m). */
-  runHeight: 1.35,
+  runBehind: 2.05,
+  /** Roadie run camera height (m): low, behind the hips. */
+  runHeight: 1.2,
+  /** Roadie run camera offset to the right (m). */
+  runRight: 0.42,
   /** Roadie run field of view (deg). */
-  runFov: 78,
-  /** Roadie run camera bob amplitude (m). */
-  runBob: 0.04,
+  runFov: 80,
+  /** Roadie run camera bob amplitude (m), synced to footfalls. */
+  runBob: 0.06,
+  /** Roadie run handheld shake (trauma floor, 0 to 1). */
+  runShake: 0.42,
+  /** Roadie run camera roll sway per stride (deg). */
+  runRoll: 1.3,
   /** Dialogue camera field of view (deg). */
   dialogueFov: 45,
   /** Dialogue camera blend time (s). */
@@ -88,6 +94,14 @@ export const FEEL = {
   /** Screen shake multiplier. */
   shakeScale: 1.0,
 };
+
+/** Camera shake: rotation (deg) and roll (deg) and offset (m) at full trauma, noise speed (rad/s), trauma decay (1/s),
+ * the radius (m) over which quakes from stomps, charges and blasts fade out, and kicks for taking hits. */
+export const SHAKE = { maxDeg: 2.6, maxRoll: 1.8, maxMove: 0.05, freq: 14, decay: 1.6, quakeRadius: 22, hitShield: 0.35, hitHealth: 0.55, blast: 0.85, stomp: 0.9, chargePerSec: 1.6, pillarStun: 0.75, cannon: 0.04 };
+
+/** Roadie run body: forward hunch (rad), neck counter, crouch drop (m), extra knee lift, shoulder rock and torso twist (rad),
+ * lean into turns (rad per rad/s, capped) and stride length (m). */
+export const ROADIE = { hunch: 0.78, neck: 0.62, drop: 0.1, knee: 0.4, rock: 0.07, twist: 0.14, turnLean: 0.05, maxLean: 0.22, stride: 2.4 };
 export type FeelKey = keyof typeof FEEL;
 export const FEEL_DEFAULTS: Readonly<typeof FEEL> = { ...FEEL };
 
@@ -103,6 +117,10 @@ export const FEEL_RANGES: Partial<Record<FeelKey, [number, number, number]>> = {
   padCurve: [1, 3, 0.05],
   turnRate: [180, 1440, 10],
   runTurnRate: [60, 540, 5],
+  runShake: [0, 1, 0.01],
+  runRoll: [0, 5, 0.1],
+  runBob: [0, 0.2, 0.005],
+  shakeScale: [0, 3, 0.05],
   kickRecovery: [1, 20, 0.5],
 };
 

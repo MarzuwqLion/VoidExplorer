@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FEEL, BODY, DIALOGUE_CAM } from '../data/tuning';
+import { FEEL, BODY, DIALOGUE_CAM, SHAKE, ROADIE } from '../data/tuning';
 import type { PhysicsWorld } from '../world/physics';
 import type { PlayerController } from './controller';
 
@@ -9,6 +9,10 @@ interface Framing {
   right: number;
   height: number;
   fov: number;
+}
+/** Smooth handheld noise in -1..1 from layered sines; k picks an independent channel. */
+function noise(t: number, k: number): number {
+  return Math.sin(t + k * 12.9898) * 0.5 + Math.sin(t * 2.13 + k * 78.233) * 0.3 + Math.sin(t * 3.71 + k * 37.719) * 0.2;
 }
 function lerpF(a: Framing, b: Framing, k: number): void {
   a.behind += (b.behind - a.behind) * k;
@@ -36,7 +40,9 @@ export class CameraRig {
   /** Distance from camera to the commander's head, for fading. */
   headDist = 3;
   trauma = 0;
-  private bobT = 0;
+  private shakeT = 0;
+  /** 0 to 1 blend into the roadie run's bob, sway and handheld shake. */
+  private runK = 0;
   /** Current dialogue shot, if any (read by tests). */
   dialogue: { pos: THREE.Vector3; look: THREE.Vector3 } | null = null;
   private dBlend = 0;
@@ -113,7 +119,8 @@ export class CameraRig {
     const rec = Math.min(1, FEEL.kickRecovery * dt);
     this.kickPitch -= this.kickPitch * rec;
     this.kickYaw -= this.kickYaw * rec;
-    this.trauma = Math.max(0, this.trauma - dt * 1.8);
+    this.trauma = Math.max(0, this.trauma - dt * SHAKE.decay);
+    this.runK += ((opts.running ? 1 : 0) - this.runK) * Math.min(1, dt * 6);
     this.shoulderCur += (this.shoulder - this.shoulderCur) * Math.min(1, dt * 10);
 
     const crouchDrop = p.crouched ? (FEEL.camHeight - 1.05) * (1 - p.popUp) : 0;
@@ -123,13 +130,14 @@ export class CameraRig {
       target = { behind: FEEL.aimBehind, right: FEEL.aimRight, height: FEEL.aimHeight - crouchDrop, fov: FEEL.aimFov };
       blend = FEEL.aimBlend;
     } else if (opts.running) {
-      target = { behind: FEEL.runBehind, right: FEEL.camRight, height: FEEL.runHeight, fov: FEEL.runFov };
+      target = { behind: FEEL.runBehind, right: FEEL.runRight, height: FEEL.runHeight, fov: FEEL.runFov };
     } else {
       target = { behind: FEEL.camBehind, right: FEEL.camRight, height: FEEL.camHeight - crouchDrop, fov: FEEL.camFov };
     }
     lerpF(this.cur, target, 1 - Math.exp((-dt * 3) / blend));
-    this.bobT += dt * (opts.running ? 11 : 0);
-    const bob = opts.running ? Math.sin(this.bobT) * FEEL.runBob : 0;
+    // Footfall-synced bob: the camera dips each time a foot lands.
+    const phase = (p.odometer / ROADIE.stride) * Math.PI * 2;
+    const bob = (Math.abs(Math.sin(phase)) - 0.6) * FEEL.runBob * this.runK;
 
     const yaw = this.yaw * DEG;
     const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
@@ -164,11 +172,16 @@ export class CameraRig {
       q.slerp(new THREE.Quaternion().setFromRotationMatrix(dm), k);
       fov += (FEEL.dialogueFov - fov) * k;
     }
-    // Shake.
-    if (this.trauma > 0 && this.shakeEnabled) {
-      const s = this.trauma * this.trauma * 0.6 * DEG;
-      const e = new THREE.Euler((Math.random() - 0.5) * s * 2, (Math.random() - 0.5) * s * 2, (Math.random() - 0.5) * s, 'YXZ');
+    // Shake: impact trauma plus the roadie run's handheld floor, and stride sway; held still in conversations.
+    const calm = 1 - this.dBlend;
+    const tr = Math.max(this.trauma, this.runK * FEEL.runShake);
+    this.shakeT += dt * SHAKE.freq * (1 + this.trauma);
+    if (this.shakeEnabled && calm > 0 && (tr > 0.001 || this.runK > 0.001)) {
+      const s = tr * tr * calm;
+      const sway = Math.sin(phase) * FEEL.runRoll * this.runK * calm;
+      const e = new THREE.Euler(noise(this.shakeT, 1) * SHAKE.maxDeg * s * DEG, noise(this.shakeT, 2) * SHAKE.maxDeg * s * DEG, (noise(this.shakeT, 3) * SHAKE.maxRoll * s + sway) * DEG, 'YXZ');
       q.multiply(new THREE.Quaternion().setFromEuler(e));
+      camPos.addScaledVector(right, noise(this.shakeT, 4) * SHAKE.maxMove * s).y += noise(this.shakeT, 5) * SHAKE.maxMove * s;
     }
     this.pos.copy(camPos);
     this.quat.copy(q);

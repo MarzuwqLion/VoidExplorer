@@ -6,7 +6,7 @@ import { commanderPose, type CommanderAnim } from './anim';
 import { LOOKS } from '../data/characters';
 import type { PlayerController } from './controller';
 import type { WeaponId } from '../data/names';
-import { FEEL, SURVIVAL, MELEE } from '../data/tuning';
+import { FEEL, SURVIVAL, MELEE, SIM } from '../data/tuning';
 
 export interface WeaponPose {
   current: WeaponId;
@@ -28,6 +28,7 @@ export class CommanderView {
   private sprint = 0;
   private crouch = 0;
   private opacity = 1;
+  private turn = 0;
 
   constructor(
     private armed: boolean,
@@ -77,6 +78,7 @@ export class CommanderView {
     while (df > Math.PI) df -= Math.PI * 2;
     while (df < -Math.PI) df += Math.PI * 2;
     this.root.rotation.y = p.prevFacing + df * alpha;
+    this.turn += (df * SIM.hz - this.turn) * Math.min(1, dt * 8);
     const k = Math.min(1, dt * 12);
     this.aim += ((p.aiming ? 1 : 0) - this.aim) * k;
     this.sprint += ((p.sprinting ? 1 : 0) - this.sprint) * k;
@@ -108,6 +110,7 @@ export class CommanderView {
       harvest: w?.harvest ?? 0,
       recoil: w?.recoil ?? 0,
       heavy: false,
+      turn: this.turn,
     };
     applyPose(this.rig, commanderPose(a));
     animateFace(this.rig.face, this.t, 0.5, 0);

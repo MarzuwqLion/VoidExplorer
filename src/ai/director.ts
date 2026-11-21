@@ -8,6 +8,7 @@ import { buildCoverPoints, pickCover, type CoverPoint } from './cover';
 import { Projectiles } from './projectiles';
 import { AI, ENEMIES, SPITTER, FOREMAN } from '../data/enemies';
 import { AMMO_DROP } from '../data/weapons';
+import { SHAKE } from '../data/tuning';
 import type { EnemyType } from '../data/names';
 import type { XZ } from '../data/layouts';
 import type { EncounterDef, EncounterStatus, SpawnDef } from './encounter';
@@ -21,6 +22,8 @@ export interface DirectorEvents extends Record<string, unknown> {
   sound: { id: SoundId; pos: THREE.Vector3 };
   splash: THREE.Vector3;
   blast: THREE.Vector3;
+  /** Ground shake at a point; the scene fades it with distance. */
+  quake: { pos: THREE.Vector3; amount: number };
   pickup: { kind: 'smg' | 'rifle'; amount: number };
   spawned: Enemy;
 }
@@ -252,6 +255,9 @@ export class Director {
   sound(id: SoundId, pos: THREE.Vector3): void {
     this.events.emit('sound', { id, pos: pos.clone() });
   }
+  quake(pos: THREE.Vector3, amount: number): void {
+    this.events.emit('quake', { pos: pos.clone(), amount });
+  }
 
   private onKill(e: Enemy): void {
     this.releaseToken(e);
@@ -327,6 +333,7 @@ export class Director {
       blast: (m) => {
         const v = new THREE.Vector3(m.x, m.y, m.z);
         this.events.emit('blast', v);
+        this.quake(v, SHAKE.blast);
         this.sound('mortar_hit', v);
         const pp = this.player;
         if (Math.hypot(pp.x - m.x, pp.z - m.z) <= FOREMAN.mortarRadius) this.combat.damagePlayer(FOREMAN.mortarDamage, v);

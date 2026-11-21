@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Enemy } from './enemy';
 import type { Director } from './director';
 import { ALPHA, FOREMAN, ENEMIES } from '../data/enemies';
+import { SHAKE } from '../data/tuning';
 import type { EnemyType } from '../data/names';
 
 const tmp = new THREE.Vector3();
@@ -84,6 +85,7 @@ export function alphaBrain(e: Enemy, d: Director, dt: number): void {
         e.stunned = true;
         e.speedNow = 0;
         d.sound('knockdown', e.pos);
+        d.quake(e.pos, SHAKE.pillarStun);
         return;
       }
       const nx = e.pos.x + fx * step, nz = e.pos.z + fz * step;
@@ -97,6 +99,7 @@ export function alphaBrain(e: Enemy, d: Director, dt: number): void {
       e.dist += step;
       e.speedNow = ALPHA.chargeSpeed;
       e.mem.run += step;
+      d.quake(e.pos, SHAKE.chargePerSec * dt);
       if (!e.mem.hit && Math.hypot(p.x - e.pos.x, p.z - e.pos.z) < ALPHA.hitRadius + 0.35) {
         e.mem.hit = 1;
         d.combat.damagePlayer(ALPHA.chargeDamage, e.pos, { knockdown: true });
@@ -198,6 +201,7 @@ export function foremanBrain(e: Enemy, d: Director, dt: number): void {
       if (e.stateT >= FOREMAN.stompWindup && !e.mem.stomped) {
         e.mem.stomped = 1;
         d.sound('foreman_stomp', e.pos);
+        d.quake(e.pos, SHAKE.stomp);
         if (dist <= FOREMAN.stompRange + 0.5) {
           d.combat.damagePlayer(FOREMAN.stompDamage, e.pos);
           const pl = d.world.player;
@@ -230,6 +234,7 @@ export function foremanBrain(e: Enemy, d: Director, dt: number): void {
         const f = e.forward(tmp);
         const m = new THREE.Vector3(e.pos.x - f.z * 0.9 + f.x * 1.2, e.pos.y + 1.7, e.pos.z + f.x * 0.9 + f.z * 1.2);
         d.combat.enemyShot(m, FOREMAN.cannonError, FOREMAN.damagePerHit, 0xffd060, 'foreman_cannon');
+        d.quake(e.pos, SHAKE.cannon);
       }
       if (e.stateT >= FOREMAN.sweep) {
         e.setState('vent');

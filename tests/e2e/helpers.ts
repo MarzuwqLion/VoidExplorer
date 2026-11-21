@@ -40,6 +40,15 @@ export async function litFraction(page: Page): Promise<number> {
     return lit / (d.length / 4);
   }, buf.toString('base64'));
 }
+/** Screenshot to tests/screenshots; retries when Windows briefly locks the file (indexer or antivirus scan). */
 export async function shot(page: Page, path: string): Promise<void> {
-  await page.screenshot({ path: 'tests/screenshots/' + path });
+  for (let i = 0; ; i++) {
+    try {
+      await page.screenshot({ path: 'tests/screenshots/' + path });
+      return;
+    } catch (e) {
+      if (i >= 4 || !/UNKNOWN|EBUSY|EPERM/.test(String(e))) throw e;
+      await page.waitForTimeout(400);
+    }
+  }
 }
