@@ -6,6 +6,7 @@ import { Fx } from '../world/fx';
 import { rng } from '../core/rng';
 import { WEAPONS, WEAPON_ORDER } from '../data/weapons';
 import { FEEL, SHAKE } from '../data/tuning';
+import { FX, SPLAT, HITSTOP } from '../data/fx';
 import type { PlayerCmd } from '../player/controller';
 import type { Damageable } from '../ai/types';
 import type { SoundId } from '../data/sounds';
@@ -33,7 +34,7 @@ export abstract class FieldScene extends WalkScene {
     this.setupWalk(world);
     const g = this.game;
     this.combat = new Combat(world, rng, { shieldMax: g.state.shieldMax, medkitMax: g.state.medkitMax, magMul: g.state.magMultiplier }, g.state.data.stats);
-    this.fx = new Fx();
+    this.fx = new Fx((x, y, z) => world.physics.ray({ x, y: y + 0.3, z }, { x: 0, y: -1, z: 0 }, 40)?.point.y ?? null);
     this.three.add(this.fx.group);
     this.checkpoint.copy(world.player.pos);
     this.checkpointYaw = world.cam.yaw;
@@ -44,6 +45,9 @@ export abstract class FieldScene extends WalkScene {
         const m = this.commander.muzzleWorld();
         this.fx.tracer(m, e.to, e.color);
         this.fx.muzzle(m);
+        const yaw = (world.cam.yaw * Math.PI) / 180;
+        const fwd = world.cam.forward();
+        this.fx.casing(m.clone().addScaledVector(fwd, -0.3), new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw)));
         this.recoil = 1;
       } else {
         this.fx.tracer(e.from, e.to, e.color, 0.09);
@@ -51,12 +55,14 @@ export abstract class FieldScene extends WalkScene {
       }
     });
     c.events.on('impact', (e) => {
-      this.fx.impact(e.point, e.normal, e.kind);
+      this.fx.impact(e.point, e.normal, e.kind, e.surface);
       const id: SoundId = e.kind === 'flesh' ? 'impact_flesh' : e.kind === 'metal' ? 'impact_metal' : e.kind === 'shield' ? 'shield_hit' : 'impact_hard';
       this.playAt(id, e.point);
     });
     c.events.on('hit', (e) => {
       this.hud.hitMarker(e.kind);
+      if (e.kind === 'kill') g.hitStop((e.target as { def?: { boss?: boolean } }).def?.boss ? HITSTOP.boss : HITSTOP.kill);
+      else if (e.kind === 'head') g.hitStop(HITSTOP.head);
       g.audio.play(e.kind === 'kill' ? 'killmarker' : e.kind === 'head' ? 'headshot' : 'hitmarker');
     });
     c.events.on('playerHit', (e) => {
@@ -66,6 +72,7 @@ export abstract class FieldScene extends WalkScene {
       this.hud.damageFrom(ang - heading);
       this.hud.flashColor(e.shield ? 'rgba(92,200,255,0.5)' : 'rgba(255,40,30,0.55)');
       this.hitReact = 1;
+      if (e.shield) this.fx.shieldHit();
       if (g.settings.shake) world.cam.addShake(e.shield ? SHAKE.hitShield : SHAKE.hitHealth);
       const chest = world.chest();
       this.fx.burst(chest, 8, e.shield ? 0x5cc8ff : 0xff4030, 2.5, 0.3, 0, 0.5);
@@ -85,7 +92,7 @@ export abstract class FieldScene extends WalkScene {
     d.events.on('sound', (e) => this.playAt(e.id, e.pos));
     d.events.on('splash', (p) => this.fx.burst(p, 24, 0x9aff40, 5, 0.6, -8, 1));
     d.events.on('blast', (p) => {
-      this.fx.burst(p, 40, 0xffa040, 9, 0.7, -10, 1.2);
+      this.fx.blast(p);
     });
     d.events.on('quake', (q) => {
       const p = world.player.pos;
@@ -98,6 +105,7 @@ export abstract class FieldScene extends WalkScene {
     });
     d.events.on('kill', (e) => {
       g.state.data.stats.kills++;
+      this.fx.splat(e.pos, SPLAT[e.type] ?? FX.holeColor, FX.killSplat * (e.def.boss ? 2.5 : 1));
       this.onKill(e);
     });
     this.api.killAll = () => d.killAll();
@@ -214,6 +222,8 @@ export abstract class FieldScene extends WalkScene {
 
   render(alpha: number, frameDt: number): void {
     super.render(alpha, frameDt);
+    this.post.hit = this.hitReact;
+    this.fx.setShieldCenter(this.world.chest());
     this.fx.update(frameDt);
     this.enemyViews.update(frameDt, alpha, this.game.debug.aiLabels, this.camera);
     this.overlay.update(this.game.debug.showNav, this.game.debug.showColliders);

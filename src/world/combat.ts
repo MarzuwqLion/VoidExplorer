@@ -13,7 +13,8 @@ import type { WeaponId } from '../data/names';
 
 export interface CombatEvents extends Record<string, unknown> {
   shot: { from: THREE.Vector3; to: THREE.Vector3; color: number; player: boolean };
-  impact: { point: THREE.Vector3; normal: THREE.Vector3; kind: 'hard' | 'flesh' | 'metal' | 'shield' };
+  /** surface: true for level geometry (leaves a mark), false for a body. */
+  impact: { point: THREE.Vector3; normal: THREE.Vector3; kind: 'hard' | 'flesh' | 'metal' | 'shield'; surface: boolean };
   hit: { kind: 'hit' | 'kill' | 'head'; target: Damageable };
   playerHit: { amount: number; from: V3; shield: boolean };
   sound: { id: SoundId; pos?: V3 };
@@ -157,10 +158,10 @@ export class Combat {
       this.stats.shotsHit++;
       const kind = res.killed ? 'kill' : part === 'head' ? 'head' : 'hit';
       this.events.emit('hit', { kind, target: hitT.target });
-      this.events.emit('impact', { point: end, normal: shotDir.clone().negate(), kind: res.shield ? 'shield' : res.armor || hitT.target.material === 'metal' ? 'metal' : 'flesh' });
+      this.events.emit('impact', { point: end, normal: shotDir.clone().negate(), kind: res.shield ? 'shield' : res.armor || hitT.target.material === 'metal' ? 'metal' : 'flesh', surface: false });
     } else if (block) {
       end = new THREE.Vector3(block.point.x, block.point.y, block.point.z);
-      this.events.emit('impact', { point: end, normal: new THREE.Vector3(block.normal.x, block.normal.y, block.normal.z), kind: 'hard' });
+      this.events.emit('impact', { point: end, normal: new THREE.Vector3(block.normal.x, block.normal.y, block.normal.z), kind: 'hard', surface: true });
     } else end = aim;
     this.events.emit('shot', { from: m, to: end, color: w.tracer, player: true });
     this.events.emit('sound', { id: w.sound });
@@ -302,7 +303,7 @@ export class Combat {
       this.damagePlayer(damage, from);
     } else if (block) {
       end = new THREE.Vector3(block.point.x, block.point.y, block.point.z);
-      this.events.emit('impact', { point: end, normal: new THREE.Vector3(block.normal.x, block.normal.y, block.normal.z), kind: 'hard' });
+      this.events.emit('impact', { point: end, normal: new THREE.Vector3(block.normal.x, block.normal.y, block.normal.z), kind: 'hard', surface: true });
     } else end = from.clone().addScaledVector(dir, Math.min(max, 60));
     this.events.emit('shot', { from: from.clone(), to: end, color, player: false });
     this.events.emit('sound', { id: sound, pos: from });

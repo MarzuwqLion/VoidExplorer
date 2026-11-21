@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GRADES } from '../data/atmosphere';
 import { Scene } from './scene';
 import { MapSim } from './mapSim';
 import { PLANETS, PLANET_BY_ID, STAR, BELT, type PlanetDef } from '../data/planets';
@@ -20,6 +21,7 @@ type Phase = 'fly' | 'landing' | 'takeoff';
 /** The steerable system map. */
 export class SystemMapScene extends Scene {
   readonly id = 'systemMap' as const;
+  grade = GRADES.systemMap;
   readonly sim = new MapSim();
   private planets = new Map<string, THREE.Group>();
   private ship = buildShip();

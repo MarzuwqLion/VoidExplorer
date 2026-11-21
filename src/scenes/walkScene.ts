@@ -155,6 +155,7 @@ export abstract class WalkScene extends Scene {
     this.commander.update(frameDt, alpha, this.world.player, this.weaponPose, cam.headDist);
     for (const n of this.npcs) n.update(frameDt);
     cam.apply(this.camera, alpha);
+    this.post.run = cam.runAmount;
     this.updateTalkLight(frameDt);
   }
 

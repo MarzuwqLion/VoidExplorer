@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GRADES } from '../data/atmosphere';
 import { Scene } from './scene';
 import { MenuScreen, h } from '../ui/screens';
 import { makeStarfield, makeStar } from '../world/space';
@@ -15,6 +16,7 @@ function fmtTime(s: number): string {
 /** End screen with stats and choices made. */
 export class EndScene extends Scene {
   readonly id = 'end' as const;
+  grade = GRADES.title;
   private t = 0;
   /** The Sojourner leaving for the next system, behind the stats. */
   private ship = buildShip();

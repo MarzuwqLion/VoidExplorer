@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GRADES } from '../data/atmosphere';
 import { WalkScene } from './walkScene';
 import { WalkWorld } from '../world/walkWorld';
 import { bridgePrims } from '../world/bridgeLayout';
@@ -24,6 +25,7 @@ const CREW: { id: CrewId; look: keyof typeof LOOKS; x: number; z: number; yaw: n
 /** The bridge hub: crew, star map console, upgrade terminal. */
 export class BridgeScene extends WalkScene {
   readonly id = 'bridge' as const;
+  grade = GRADES.bridge;
   protected armed = false;
   protected helmet = false;
   protected hudMode = 'bridge' as const;

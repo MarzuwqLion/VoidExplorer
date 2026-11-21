@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GRADES } from '../data/atmosphere';
 import { Snow } from '../world/snow';
 import { FieldScene } from './fieldScene';
 import { WalkWorld, type Interactable } from '../world/walkWorld';
@@ -51,6 +52,7 @@ export class PlanetScene extends FieldScene {
   async enter(opts: Record<string, unknown>): Promise<void> {
     const g = this.game;
     this.planet = (opts.planet as MissionPlanet) ?? 'amara';
+    this.grade = GRADES[this.planet];
     const { level, mission } = createPlanet(this.planet);
     this.level = level;
     const arrays = terrainArrays(level.terrain);

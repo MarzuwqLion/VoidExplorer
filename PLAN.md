@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: Done. M0 to M15 ticked. Owner playtest per README checklist.
+Next up: M17 Planet atmosphere (owner request).
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -75,3 +75,15 @@ Next up: Done. M0 to M15 ticked. Owner playtest per README checklist.
   - [x] smooth trauma shake, stronger weapon and hit kicks, distance-scaled quakes from bosses and blasts
   - [x] roadie run camera (low, close, footfall bob, sway, handheld shake) and hunched pose with turn lean; pose sign fix
   - [x] unit tests for hunch, drop, turn lean and trauma; side and camera screenshots reviewed; full suite green
+- [x] M16 Combat effects (owner request)
+  - [x] muzzle flash light and smoke, shell casings, impact sparks, chips, dust and bullet holes, kill splatter, shield shell
+  - [x] mortar blasts: fireball, sparks, chips, smoke column, shockwave ring, scorch, light flash; hit-stop on kills and headshots
+  - [x] grade pass: per-scene colour grade, vignette, grain, roadie-run edge blur, hit colour fringe
+  - [x] unit tests for pools; fx e2e screenshots reviewed; draw calls within budget; full suite green
+- [ ] M17 Planet atmosphere (owner request)
+  - [ ] drifting spores, ground mist, sun shafts and lamp cones, steam vents, snow gusts and spindrift, flickering work lights, distant flock
+  - [ ] terrain crease shading; screenshots reviewed; draw calls within budget
+- [ ] M18 Ground and set detail (owner request)
+  - [ ] swaying grass and coral canopies, pebbles, scrap debris, snow drifts, ice patches; draw calls within budget
+- [ ] M19 Ship and small touches (owner request)
+  - [ ] animated console screens, bridge dust motes, hull nose with running lights; screenshots reviewed; full suite green

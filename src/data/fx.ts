@@ -1,0 +1,58 @@
+/** Combat effects. Pool sizes, lifetimes (s), speeds (m/s), sizes (m) and colours. */
+export const FX = {
+  maxChunks: 120,
+  maxCasings: 48,
+  maxDecals: 140,
+  maxSmoke: 260,
+  maxSparks: 160,
+  maxRings: 6,
+  gravity: -14,
+  bounce: 0.35,
+  friction: 0.55,
+  casingLife: 3.5,
+  casingSize: 0.035,
+  casingSpeed: 2.6,
+  casingColor: 0xc8a050,
+  chunkLife: 2.2,
+  chunkSize: 0.05,
+  decalLife: 22,
+  decalFade: 3,
+  holeSize: 0.12,
+  holeColor: 0x16130f,
+  metalHoleColor: 0x2a2620,
+  scorchSize: 3.4,
+  scorchColor: 0x0c0a08,
+  spatterSize: 0.45,
+  spatterChance: 0.45,
+  killSplat: 1.3,
+  sparkTrail: 0.035,
+  sparkLife: 0.32,
+  muzzleSmoke: 0x9a958c,
+  dustColor: 0x8a7e6e,
+  smokeColor: 0x3a3632,
+  rockChips: 0x6a645c,
+  metalChips: 0x4a4e54,
+  ringLife: 0.55,
+  ringRadius: 7,
+  blastLight: 40,
+  blastLightRange: 18,
+  blastLightTime: 0.35,
+  shieldTime: 0.35,
+  shieldRadius: 0.75,
+  muzzleLight: 7,
+  muzzleTime: 0.05,
+} as const;
+
+/** Splatter colour left where each enemy type falls. */
+export const SPLAT: Record<string, number> = {
+  stalker: 0x2e5a1c,
+  spitter: 0x6aa82a,
+  alpha: 0x2e5a1c,
+  rifleman: 0x3a0c08,
+  rusher: 0x3a0c08,
+  marksman: 0x3a0c08,
+  foreman: 0x0e0c0a,
+};
+
+/** Hit-stop: simulation time scale and real-time length (s) on kills and headshots. */
+export const HITSTOP = { scale: 0.05, kill: 0.07, head: 0.045, boss: 0.25 };

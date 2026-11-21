@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import type { Game } from '../core/game';
 import type { SceneId } from '../core/state';
+import { GRADES, type Grade } from '../data/atmosphere';
+import type { PostState } from '../core/post';
 
 /** Scene-specific hooks for the debug API. */
 export interface SceneApi {
@@ -22,6 +24,9 @@ export abstract class Scene {
   readonly three = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(70, 16 / 9, 0.1, 4000);
   api: SceneApi = {};
+  /** Colour grade for this scene and the live screen effects it drives. */
+  grade: Grade = GRADES.neutral;
+  post: PostState = { run: 0, hit: 0 };
   private cleanups: (() => void)[] = [];
   constructor(readonly game: Game) {}
 

@@ -107,6 +107,10 @@ export class CameraRig {
     const look = new THREE.Vector3(best.pos.x - Math.sin(yaw) * dist, them.y - 0.08, best.pos.z - Math.cos(yaw) * dist);
     return { pos: best.pos, look };
   }
+  /** 0 to 1, how far into the roadie run the camera is. */
+  get runAmount(): number {
+    return this.runK;
+  }
   get inDialogue(): boolean {
     return this.dBlend > 0.01;
   }

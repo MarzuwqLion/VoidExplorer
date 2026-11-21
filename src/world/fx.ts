@@ -1,12 +1,32 @@
 import * as THREE from 'three';
 import { glowTexture } from './space';
+import { FX } from '../data/fx';
+import { Chunks, Decals, Rings } from './fxPools';
+import { SoftParticles, Sparks, ShieldBubble } from './fxParticles';
+
+const UP = new THREE.Vector3(0, 1, 0);
+/** Floor height below a point, for bouncing bits and ground marks. */
+export type GroundFn = (x: number, y: number, z: number) => number | null;
 
 const MAX_TRACERS = 64;
 const MAX_PARTS = 600;
 
-/** Pooled effects: tracers, particles, muzzle flashes, glows. A few draw calls in total. */
+/**
+ * Pooled effects: tracers, particles, muzzle flashes, shell casings, chips, sparks, smoke, surface marks, shockwave
+ * rings and the shield shell. Each pool is one draw call and hides itself while idle.
+ */
 export class Fx {
   readonly group = new THREE.Group();
+  readonly casings: Chunks;
+  readonly chips: Chunks;
+  readonly decals = new Decals();
+  readonly rings = new Rings();
+  readonly smoke = new SoftParticles();
+  readonly sparks = new Sparks();
+  readonly shield = new ShieldBubble();
+  private blastLight: THREE.PointLight;
+  private blastT = 0;
+  private shieldCenter = new THREE.Vector3();
   private tracerGeo: THREE.BufferGeometry;
   private tracerPos: Float32Array;
   private tracerCol: Float32Array;
@@ -22,7 +42,13 @@ export class Fx {
   private flashT = 0;
   private tex: THREE.Texture | null = null;
 
-  constructor() {
+  constructor(private ground: GroundFn = () => null) {
+    const brass = new THREE.MeshStandardMaterial({ color: FX.casingColor, metalness: 0.85, roughness: 0.3 });
+    this.casings = new Chunks(new THREE.CylinderGeometry(0.28, 0.28, 1, 6), brass, FX.maxCasings);
+    const chipMat = new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0.1, flatShading: true });
+    this.chips = new Chunks(new THREE.IcosahedronGeometry(0.5, 0), chipMat, FX.maxChunks);
+    this.blastLight = new THREE.PointLight(0xffa050, 0, FX.blastLightRange, 2);
+    this.group.add(this.casings.mesh, this.chips.mesh, this.decals.mesh, this.rings.mesh, this.smoke.points, this.sparks.lines, this.shield.mesh, this.blastLight);
     this.tracerPos = new Float32Array(MAX_TRACERS * 6);
     this.tracerCol = new Float32Array(MAX_TRACERS * 6);
     this.tracerGeo = new THREE.BufferGeometry();
@@ -66,11 +92,46 @@ export class Fx {
     this.flash.position.copy(p);
     (this.flash.material as THREE.SpriteMaterial).color.set(color);
     this.flash.material.rotation = Math.random() * Math.PI;
+    this.flash.scale.setScalar(0.4 + Math.random() * 0.35);
     this.flash.visible = true;
     this.flashLight.position.copy(p);
     this.flashLight.color.set(color);
-    this.flashLight.intensity = 6;
-    this.flashT = 0.05;
+    this.flashLight.intensity = FX.muzzleLight;
+    this.flashT = FX.muzzleTime;
+    this.smoke.burst(p, 2, 0.5, 0.35, 0.7, 0.08, 0.45, 0.22, FX.muzzleSmoke);
+  }
+  /** Eject a spent casing from near the muzzle toward the shooter's right. */
+  casing(p: THREE.Vector3, right: THREE.Vector3): void {
+    const v = right.clone().multiplyScalar(FX.casingSpeed).add(new THREE.Vector3((Math.random() - 0.5) * 0.6, 1.6 + Math.random(), (Math.random() - 0.5) * 0.6));
+    this.casings.spawn(p, v, FX.casingLife, this.floor(p), FX.casingSize);
+  }
+  private floor(p: THREE.Vector3): number {
+    return this.ground(p.x, p.y, p.z) ?? p.y - 1.4;
+  }
+  /** A flat mark on the ground below a point. */
+  splat(p: THREE.Vector3, color: number, size: number): void {
+    const y = this.ground(p.x, p.y + 0.3, p.z);
+    if (y === null || p.y - y > 3) return;
+    this.decals.add(new THREE.Vector3(p.x, y, p.z), UP, size * (0.7 + Math.random() * 0.6), color);
+  }
+  /** Mortar or explosive blast: flash, fireball sparks, chips, smoke column, shockwave ring and a scorch mark. */
+  blast(p: THREE.Vector3): void {
+    this.burst(p, 40, 0xffa040, 9, 0.7, -10, 1.2);
+    this.sparks.spray(p, UP, 24, 11, 0xffb050);
+    for (let i = 0; i < 12; i++) this.chips.spawn(p.clone().add(new THREE.Vector3(0, 0.2, 0)), new THREE.Vector3((Math.random() - 0.5) * 9, 4 + Math.random() * 6, (Math.random() - 0.5) * 9), FX.chunkLife, this.floor(p), FX.chunkSize * 2.2, FX.rockChips);
+    this.smoke.burst(p, 10, 2.2, 1.8, 2.6, 0.8, 3.2, 0.55, FX.smokeColor);
+    this.smoke.burst(p, 6, 3.5, 0.4, 1.4, 0.6, 2.2, 0.4, FX.dustColor);
+    this.rings.add(p, FX.ringRadius, 0xffb070);
+    this.splat(p, FX.scorchColor, FX.scorchSize);
+    this.blastLight.position.copy(p).y += 1;
+    this.blastT = FX.blastLightTime;
+  }
+  /** Show the shield shell around the commander. */
+  shieldHit(): void {
+    this.shield.hit();
+  }
+  setShieldCenter(p: THREE.Vector3): void {
+    this.shieldCenter.copy(p);
   }
   /** Burst of particles. */
   burst(p: THREE.Vector3, n: number, color: number, speed: number, life: number, gravity = -9, up = 0.4, normal?: THREE.Vector3): void {
@@ -97,13 +158,23 @@ export class Fx {
       this.pPos.set([p.x, p.y, p.z], i * 3);
     }
   }
-  impact(p: THREE.Vector3, normal: THREE.Vector3, kind: 'hard' | 'flesh' | 'metal' | 'shield'): void {
+  /** Bullet impact by surface: sparks, chips, dust, holes and spatter. Surface hits leave a mark along the normal. */
+  impact(p: THREE.Vector3, normal: THREE.Vector3, kind: 'hard' | 'flesh' | 'metal' | 'shield', surface = true): void {
     if (kind === 'hard') {
       this.burst(p, 6, 0xffd080, 4, 0.25, -12, 0.5, normal);
-      this.burst(p, 5, 0x8a7a6a, 1.5, 0.6, -2, 0.8, normal);
-    } else if (kind === 'metal') this.burst(p, 9, 0xfff0a0, 6, 0.3, -12, 0.5, normal);
-    else if (kind === 'shield') this.burst(p, 10, 0x5cc8ff, 3, 0.35, 0, 0.5, normal);
-    else this.burst(p, 7, 0xff7050, 2.5, 0.35, -9, 0.4, normal);
+      this.sparks.spray(p, normal, 3, 5, 0xffc070);
+      for (let i = 0; i < 3; i++) this.chips.spawn(p, normal.clone().multiplyScalar(2.5).add(new THREE.Vector3((Math.random() - 0.5) * 3, Math.random() * 3, (Math.random() - 0.5) * 3)), FX.chunkLife, this.floor(p), FX.chunkSize, FX.rockChips);
+      this.smoke.burst(p.clone().addScaledVector(normal, 0.1), 2, 0.8, 0.3, 0.9, 0.12, 0.6, 0.35, FX.dustColor);
+      if (surface) this.decals.add(p, normal, FX.holeSize, FX.holeColor);
+    } else if (kind === 'metal') {
+      this.burst(p, 6, 0xfff0a0, 6, 0.3, -12, 0.5, normal);
+      this.sparks.spray(p, normal, 8, 7, 0xffe0a0);
+      if (surface) this.decals.add(p, normal, FX.holeSize * 0.8, FX.metalHoleColor);
+    } else if (kind === 'shield') this.burst(p, 12, 0x5cc8ff, 3, 0.35, 0, 0.5, normal);
+    else {
+      this.burst(p, 7, 0xff7050, 2.5, 0.35, -9, 0.4, normal);
+      if (Math.random() < FX.spatterChance) this.splat(p, 0x2a120c, FX.spatterSize);
+    }
   }
   update(dt: number): void {
     for (let i = 0; i < MAX_TRACERS; i++) {
@@ -133,6 +204,17 @@ export class Fx {
     }
     this.partGeo.attributes.position.needsUpdate = true;
     this.partGeo.attributes.color.needsUpdate = true;
+    this.casings.update(dt);
+    this.chips.update(dt);
+    this.decals.update(dt);
+    this.rings.update(dt);
+    this.smoke.update(dt);
+    this.sparks.update(dt);
+    this.shield.update(dt, this.shieldCenter);
+    if (this.blastT > 0) {
+      this.blastT = Math.max(0, this.blastT - dt);
+      this.blastLight.intensity = FX.blastLight * (this.blastT / FX.blastLightTime) ** 2;
+    }
     if (this.flashT > 0) {
       this.flashT -= dt;
       if (this.flashT <= 0) {

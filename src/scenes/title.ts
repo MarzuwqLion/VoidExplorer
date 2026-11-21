@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GRADES } from '../data/atmosphere';
 import { Scene } from './scene';
 import { MenuScreen, h } from '../ui/screens';
 import { openControls, openSettings } from '../ui/menus';
@@ -12,6 +13,7 @@ import { buildShip } from '../world/models/ship';
 /** Title screen with the intro card. */
 export class TitleScene extends Scene {
   readonly id = 'title' as const;
+  grade = GRADES.title;
   private menu: MenuScreen | null = null;
   private card: HTMLElement | null = null;
   private t = 0;

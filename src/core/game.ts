@@ -21,6 +21,8 @@ import { AudioEngine } from './audio';
 import { Emitter } from './events';
 import { loadSettings, saveSettings, saveGame, type Settings } from './save';
 import { SIM, RENDER, TRANSITIONS, BLOOM } from '../data/tuning';
+import { HITSTOP } from '../data/fx';
+import { GradePass } from './post';
 import { UI } from '../ui/ui';
 import { openPause } from '../ui/menus';
 import { MenuList } from '../ui/screens';
@@ -39,6 +41,7 @@ export class Game {
   private composer: EffectComposer | null = null;
   private renderPass: RenderPass | null = null;
   bloom: UnrealBloomPass | null = null;
+  private grade = new GradePass();
   readonly ui: UI;
   readonly input = new Input();
   readonly state = new GameState();
@@ -57,6 +60,8 @@ export class Game {
   preTick: ((dt: number) => void) | null = null;
   fps = 0;
   drawCalls = 0;
+  /** Real seconds of hit-stop left (simulation runs at HITSTOP.scale). */
+  private hitStopT = 0;
   private lastT = 0;
   private wantsLock = false;
   private factories = new Map<SceneId, SceneFactory>();
@@ -91,12 +96,18 @@ export class Game {
       this.composer.addPass(new ShaderPass(NAN_GUARD));
       this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), BLOOM.strength, BLOOM.radius, BLOOM.threshold);
       this.composer.addPass(this.bloom);
+      this.composer.addPass(this.grade.pass);
       this.composer.addPass(new OutputPass());
     }
     this.ui = new UI(uiRoot);
     this.loop = new FixedLoop(SIM.hz, (dt) => this.tick(dt), SIM.maxStepsPerFrame);
     this.applySettings();
     MenuList.onTick = () => this.audio.play('ui_tick');
+  }
+
+  /** Freeze the action for a beat (kills, headshots). Only real-time frames slow; scripted test steps are unaffected. */
+  hitStop(seconds: number): void {
+    this.hitStopT = Math.max(this.hitStopT, seconds);
   }
 
   /** Gamepad rumble where supported. */
@@ -203,8 +214,10 @@ export class Game {
     const dt = this.lastT ? (t - this.lastT) / 1000 : 1 / 60;
     this.lastT = t;
     this.fps = this.fps * 0.95 + (dt > 0 ? 1 / dt : 60) * 0.05;
-    const alpha = this.loop.advance(dt);
-    this.renderNow(alpha, dt);
+    const slow = this.hitStopT > 0 ? HITSTOP.scale : 1;
+    this.hitStopT = Math.max(0, this.hitStopT - dt);
+    const alpha = this.loop.advance(dt * slow);
+    this.renderNow(alpha, dt * slow);
     this.onFrame?.(dt);
     requestAnimationFrame(this.frame);
   };
@@ -217,6 +230,7 @@ export class Game {
       if (this.composer && this.renderPass && this.settings.bloom) {
         this.renderPass.scene = this.scene.three;
         this.renderPass.camera = this.scene.camera;
+        this.grade.apply(this.scene.grade, this.scene.post, dt, window.innerWidth, window.innerHeight);
         this.composer.render();
       } else this.renderer.render(this.scene.three, this.scene.camera);
       this.drawCalls = this.renderer.info.render.calls;
