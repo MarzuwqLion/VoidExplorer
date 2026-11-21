@@ -109,7 +109,8 @@ describe('dialogue choice lists', () => {
 });
 
 describe('line count', () => {
-  it('has 150 to 200 lines across the game, each under 30 words', async () => {
+  // The spec asked for 150 to 200; the owner asked for deeper crew dialogue afterwards (see DECISIONS.md).
+  it('has 150 to 300 lines across the game, each under 30 words', async () => {
     const { INTRO_CARD } = await import('../../src/data/dialogue/intro');
     const { AMARA_RADIO, KORR_RADIO } = await import('../../src/data/dialogue/missionRadio');
     const { MAP_RADIO } = await import('../../src/data/dialogue/radio');
@@ -119,7 +120,67 @@ describe('line count', () => {
       ...[...Object.values(AMARA_RADIO), ...Object.values(KORR_RADIO), ...Object.values(MAP_RADIO)].map((r) => r[1] as string),
     ];
     expect(texts.length).toBeGreaterThanOrEqual(150);
-    expect(texts.length).toBeLessThanOrEqual(200);
+    expect(texts.length).toBeLessThanOrEqual(300);
     for (const t of texts) expect(t.split(/\s+/).length, t).toBeLessThan(30);
+  });
+});
+
+describe('crew character threads', () => {
+  const crew = (id: string) => ALL_GRAPHS.find((g) => g.id === id)!;
+  const progress = (amara: boolean, korr: boolean, lookout?: string) => {
+    const s = new GameState();
+    s.setFlag('briefed');
+    s.setFlag('debriefed');
+    s.data.missions = { amara, korr };
+    if (amara) s.setFlag('amaraDone');
+    if (korr) s.setFlag('korrDone');
+    if (lookout) s.data.choices.lookout = lookout;
+    return s;
+  };
+  it('greetings change with mission progress', () => {
+    for (const id of ['reyes', 'zhao', 'brandt']) {
+      const seen = new Set(
+        [progress(false, false), progress(true, false), progress(false, true, 'reassure'), progress(true, true, 'reassure')].map(
+          (s) => new DialogueRunner(crew(id), s).node!.id,
+        ),
+      );
+      expect([...seen].sort(), id).toEqual(['greet0', 'greetA', 'greetB', 'greetK']);
+    }
+  });
+  it('the personal topic reaches the crew opinions and earlier topics after a mission', () => {
+    for (const id of ['reyes', 'zhao', 'brandt']) {
+      const r = new DialogueRunner(crew(id), progress(false, true, 'threaten'));
+      r.choose(r.choices().findIndex((c) => c.label === 'How are you holding up?'));
+      while (!r.choices().length) r.advance();
+      expect(r.node!.id, id).toBe('you');
+      const labels = r.choices().map((c) => c.label);
+      expect(labels, id).toContain('The rest of the crew');
+      expect(labels, id).toContain('Earlier topics');
+    }
+  });
+  it("Zhao's naming choice is remembered and paid off", () => {
+    const s = progress(true, false);
+    let r = new DialogueRunner(crew('zhao'), s);
+    r.choose(r.choices().findIndex((c) => c.label === 'How are you holding up?'));
+    r.advance();
+    expect(r.node!.id).toBe('name1');
+    r.choose(r.choices().findIndex((c) => c.label === 'Name it after Boateng'));
+    expect(s.data.choices.zhaoName).toBe('boateng');
+    s.data.missions.korr = true;
+    s.setFlag('korrDone');
+    r = new DialogueRunner(crew('zhao'), s);
+    r.choose(r.choices().findIndex((c) => c.label === 'How are you holding up?'));
+    r.advance();
+    expect(r.node!.id).toBe('nfB');
+  });
+  it('Brandt comments once on each upgrade, then greets as usual', () => {
+    const s = progress(true, false);
+    s.data.upgrades.push('shield');
+    let r = new DialogueRunner(crew('brandt'), s);
+    expect(r.node!.id).toBe('upShield');
+    r.advance();
+    expect(r.node!.id).toBe('greetA');
+    r = new DialogueRunner(crew('brandt'), s);
+    expect(r.node!.id).toBe('greetA');
   });
 });

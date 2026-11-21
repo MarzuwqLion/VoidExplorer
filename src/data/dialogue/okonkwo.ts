@@ -1,4 +1,5 @@
 import { nodes, END, type DGraph } from './types';
+import { NAMES } from '../names';
 
 /** Lt. Cmdr. Okonkwo: briefing, hub topics, after-action talks and the final debrief. */
 export const OKONKWO: DGraph = {
@@ -28,15 +29,47 @@ export const OKONKWO: DGraph = {
     {
       id: 'hub', speaker: 'xo', text: 'Commander.',
       choices: [
-        { label: 'About you', to: 'tSelf' },
+        { label: 'About you', to: 'tSelf', cond: { maxMissions: 0 } },
+        { label: 'How are you holding up?', to: 'oArcA', cond: { missions: 1, maxMissions: 1, flag: 'amaraDone' } },
+        { label: 'How are you holding up?', to: 'oArcK', cond: { missions: 1, maxMissions: 1, flag: 'korrDone' } },
+        { label: 'How are you holding up?', to: 'oArcB', cond: { missions: 2 } },
         { label: 'About the Corps', to: 'tCorps' },
         { label: 'About the system', to: 'tSystem' },
         { label: 'Goodbye', to: END },
       ],
     },
     { id: 'tSelf', speaker: 'xo', text: "I keep the list of what can go wrong. It's a long list. You're usually near the top.", next: 'tSelf2' },
-    { id: 'tSelf2', speaker: 'xo', text: 'Twelve years in the Corps. Three ships. This is the first crew I would follow into a bad idea.', next: 'hub' },
-    { id: 'tCorps', speaker: 'xo', text: "We're not soldiers and we're not scientists. We're what you send before you know which one you need.", next: 'hub' },
+    { id: 'tSelf2', speaker: 'xo', text: 'Twelve years in the Corps. Three ships. This is the first crew I would follow into a bad idea.', next: 'you' },
+    {
+      id: 'you', speaker: 'xo', text: 'Something specific?',
+      choices: [
+        { label: "What's at the top of the list?", to: 'oL1', cond: { maxMissions: 0 } },
+        { label: 'Do you miss your old ships?', to: 'oM1', cond: { missions: 1 } },
+        { label: 'The rest of the crew', to: 'crew' },
+        { label: 'Back', to: 'hub' },
+      ],
+    },
+    { id: 'oL1', speaker: 'xo', text: "Today? Reyes has wired a coffee machine into the nav bus. He thinks I don't know. I'm waiting for the right moment.", next: 'you' },
+    { id: 'oM1', speaker: 'xo', text: 'I miss people from them. The ships were just where I met them. On this one, I intend to keep the people.', next: 'you' },
+    {
+      id: 'crew', speaker: 'xo', text: 'Ask about one. Briefly.',
+      choices: [
+        { label: NAMES.crew.helm.short, to: 'cR' },
+        { label: NAMES.crew.science.short, to: 'cZ' },
+        { label: NAMES.crew.quartermaster.short, to: 'cB' },
+        { label: 'Back', to: 'you' },
+      ],
+    },
+    { id: 'cR', speaker: 'xo', text: "Best pilot I've served with. Repeat that and I'll deny it, then reassign you to inventory.", next: 'crew' },
+    { id: 'cZ', speaker: 'xo', text: 'Zhao asks the question nobody wants answered, then answers it. Useful. Occasionally exhausting.', next: 'crew' },
+    { id: 'cB', speaker: 'xo', text: 'Brandt has been in the Corps longer than this ship has existed. He reminds the ship regularly.', next: 'crew' },
+    { id: 'oArcA', speaker: 'xo', text: "Fine. Boateng sent eleven months of station reports. I've read four. The other seven are mostly about coffee.", next: 'you' },
+    { id: 'oArcK', speaker: 'xo', effects: [{ setFlag: 'korr_letters' }], text: "I've written the letters for Team Cobalt. The hard part isn't the words. It's that they're all the same words.", next: 'oArcK2' },
+    { id: 'oArcK2', speaker: 'xo', text: 'Command wants them by morning. They will have them. The families will have them first.', next: 'you' },
+    { id: 'oArcB', speaker: 'xo', text: "Two teams, one station, one survivor. Command will call it a success. I'll call it a start.", branches: [{ to: 'oArcB2', cond: { notFlag: 'korr_letters' } }], next: 'you' },
+    { id: 'oArcB2', speaker: 'xo', text: "The letters for Team Cobalt are written. Same words four times. I'll be fine. Ask me again tomorrow.", effects: [{ setFlag: 'korr_letters' }], next: 'you' },
+    { id: 'tCorps', speaker: 'xo', text: "We're not soldiers and we're not scientists. We're what you send before you know which one you need.", next: 'tCorps2' },
+    { id: 'tCorps2', speaker: 'xo', text: "Command calls us surveyors with rifles. The planets call us visitors. I prefer the planets' version.", next: 'hub' },
     { id: 'tSystem', speaker: 'xo', text: 'Oriel is old and quiet. In my experience the quiet ones are where people stop answering.', next: 'tSystem2' },
     { id: 'tSystem2', speaker: 'xo', text: 'Command wants the survey finished regardless. So do I. Unfinished maps get people killed later.', next: 'hub' },
     // After-action talks.

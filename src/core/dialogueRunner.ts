@@ -10,6 +10,7 @@ export function checkCond(c: Cond | undefined, s: GameState): boolean {
   if (c.choice && s.data.choices[c.choice[0]] !== c.choice[1]) return false;
   if (c.missions !== undefined && s.missionsDone() < c.missions) return false;
   if (c.maxMissions !== undefined && s.missionsDone() > c.maxMissions) return false;
+  if (c.upgrade && !s.hasUpgrade(c.upgrade)) return false;
   return true;
 }
 

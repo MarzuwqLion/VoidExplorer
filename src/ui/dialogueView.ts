@@ -118,7 +118,8 @@ export class DialogueView {
     }
     if (input.pressed('back') && this.buttons.length) {
       input.consume('back');
-      const i = this.runner.choices().findIndex((c) => c.label === 'Goodbye');
+      const labels = this.runner.choices().map((c) => c.label);
+      const i = labels.includes('Goodbye') ? labels.indexOf('Goodbye') : labels.indexOf('Back');
       if (i >= 0) {
         this.pick(i);
         return;

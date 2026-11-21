@@ -1,4 +1,4 @@
-import type { ResourceId } from '../names';
+import type { ResourceId, UpgradeId } from '../names';
 
 /** Condition on game state; all listed keys must hold. */
 export interface Cond {
@@ -10,6 +10,8 @@ export interface Cond {
   missions?: number;
   /** At most this many missions complete. */
   maxMissions?: number;
+  /** This upgrade has been bought. */
+  upgrade?: UpgradeId;
 }
 export interface Effect {
   setFlag?: string;
