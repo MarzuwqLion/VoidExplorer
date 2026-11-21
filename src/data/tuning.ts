@@ -185,5 +185,13 @@ export const SNOW = { count: 1500, box: 60, height: 25, fall: 2.2, drift: 1.2, s
 /** Text typing speed for dialogue (chars per second). */
 export const DIALOGUE = { charsPerSecond: 60 };
 
+/** Faces: blink interval (s) plus per-character jitter, blink length (s), closed eye scale, brow lift while talking (m),
+ * and how far a speaker's head turns (rad) toward the commander beyond the body. */
+export const FACE = { blinkEvery: 3.4, blinkJitter: 2.2, blinkTime: 0.14, closedScale: 0.12, browLift: 0.004, headYaw: 0.7, headPitch: 0.35 };
+
+/** Conversation lighting: a warm key in front of the speaker, off to the side away from the commander, and a cool rim
+ * behind the speaker. Intensities, range (m), placement offsets from the speaker's head (m) and fade rate (1/s). */
+export const DIALOGUE_LIGHT = { key: 1.8, rim: 2.2, range: 2.5, keyColor: 0xfff1e0, rimColor: 0xa8ccff, keyDist: 0.9, keySide: 0.6, keyUp: 0.35, rimBack: 0.5, rimUp: 0.45, fade: 3 };
+
 /** Area boundary. */
 export const BOUNDARY = { warnTime: 5 };

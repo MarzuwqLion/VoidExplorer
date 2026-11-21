@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { buildHumanoid, applyPose, type Humanoid } from '../world/models/humanoid';
+import { animateFace } from '../world/models/humanoidHead';
 import { buildWeapon } from '../world/models/weapons';
 import { commanderPose, type CommanderAnim } from './anim';
 import { LOOKS } from '../data/characters';
@@ -109,6 +110,7 @@ export class CommanderView {
       heavy: false,
     };
     applyPose(this.rig, commanderPose(a));
+    animateFace(this.rig.face, this.t, 0.5, 0);
     // Fade when the camera is very close.
     const target = headDist < 0.6 ? Math.max(0.15, headDist / 0.6) : 1;
     if (Math.abs(target - this.opacity) > 0.01) {

@@ -2,12 +2,13 @@ import * as THREE from 'three';
 
 /**
  * Merge the static meshes under each group of a jointed model to cut draw calls.
- * Opaque standard-material meshes without a name become one vertex-coloured mesh per group;
- * other meshes are merged per shared material. Named meshes are kept for animation.
+ * Opaque standard-material meshes without a name become one vertex-coloured mesh per group and shading mode
+ * (smooth-shaded parts keep their normals); other meshes are merged per shared material. Named meshes are kept for animation.
  */
 export function optimizeModel(root: THREE.Object3D, opts: { shadow?: (group: THREE.Object3D) => boolean } = {}): void {
   const vc = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.72, metalness: 0.18 });
-  let used = false;
+  const vcSmooth = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: false, roughness: 0.72, metalness: 0.06 });
+  let used = false, usedSmooth = false;
   const groups: THREE.Object3D[] = [];
   root.traverse((o) => {
     if (!(o as THREE.Mesh).isMesh) groups.push(o);
@@ -30,13 +31,16 @@ export function optimizeModel(root: THREE.Object3D, opts: { shadow?: (group: THR
       }
     }
     const castShadow = opts.shadow ? opts.shadow(g) : true;
-    if (plain.length) {
-      used = true;
-      const merged = mergeMeshes(plain, true);
-      const mesh = new THREE.Mesh(merged, vc);
+    const isSmooth = (m: THREE.Mesh) => (m.material as THREE.MeshStandardMaterial).flatShading === false;
+    for (const smoothParts of [false, true]) {
+      const list = plain.filter((m) => isSmooth(m) === smoothParts);
+      if (!list.length) continue;
+      if (smoothParts) usedSmooth = true;
+      else used = true;
+      const mesh = new THREE.Mesh(mergeMeshes(list, true, smoothParts), smoothParts ? vcSmooth : vc);
       mesh.castShadow = castShadow;
       mesh.receiveShadow = true;
-      for (const m of plain) {
+      for (const m of list) {
         g.remove(m);
         m.geometry.dispose();
         (m.material as THREE.Material).dispose();
@@ -49,7 +53,7 @@ export function optimizeModel(root: THREE.Object3D, opts: { shadow?: (group: THR
         continue;
       }
       const mat = list[0].material as THREE.Material;
-      const mesh = new THREE.Mesh(mergeMeshes(list, false), mat);
+      const mesh = new THREE.Mesh(mergeMeshes(list, false, (mat as THREE.MeshStandardMaterial).flatShading === false), mat);
       for (const m of list) {
         g.remove(m);
         m.geometry.dispose();
@@ -59,6 +63,7 @@ export function optimizeModel(root: THREE.Object3D, opts: { shadow?: (group: THR
     }
   }
   if (!used) vc.dispose();
+  if (!usedSmooth) vcSmooth.dispose();
 }
 
 /** Bake a whole model in its current pose into one vertex-coloured mesh (distant LOD). */
@@ -95,12 +100,12 @@ export function bakeSingleMesh(root: THREE.Object3D): THREE.Mesh {
   return mesh;
 }
 
-function mergeMeshes(list: THREE.Mesh[], colors: boolean): THREE.BufferGeometry {
+function mergeMeshes(list: THREE.Mesh[], colors: boolean, keepNormals = false): THREE.BufferGeometry {
   const pos: number[] = [], nor: number[] = [], col: number[] = [];
   for (const m of list) {
     m.updateMatrix();
     const g = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()).applyMatrix4(m.matrix);
-    g.computeVertexNormals();
+    if (!keepNormals || !g.attributes.normal) g.computeVertexNormals();
     const p = g.attributes.position.array as ArrayLike<number>, n = g.attributes.normal.array as ArrayLike<number>;
     for (let i = 0; i < p.length; i++) {
       pos.push(p[i]);

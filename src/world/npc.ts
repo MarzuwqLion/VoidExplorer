@@ -1,8 +1,12 @@
 import * as THREE from 'three';
 import { buildHumanoid, applyPose, type Humanoid, type HumanoidLook } from './models/humanoid';
+import { animateFace } from './models/humanoidHead';
 import { idlePose } from '../player/anim';
+import { FACE } from '../data/tuning';
 
-/** A friendly character: idle animation, turns to face whoever is talking to it. */
+const clamp = (v: number, a: number) => Math.max(-a, Math.min(a, v));
+
+/** A friendly character: idle animation, blinks, turns body and head to face whoever is talking to it. */
 export class Npc {
   readonly rig: Humanoid;
   readonly root: THREE.Group;
@@ -28,6 +32,7 @@ export class Npc {
   head(out = new THREE.Vector3()): THREE.Vector3 {
     return out.set(this.pos.x, this.pos.y + (this.seated ? 1.25 : 1.68), this.pos.z);
   }
+  /** Look at a point (the commander's head), or null to return to idle. */
   faceToward(p: THREE.Vector3 | null): void {
     this.face = p ? p.clone() : null;
   }
@@ -41,5 +46,13 @@ export class Npc {
     this.root.rotation.y = this.yaw;
     this.talking += ((this.face ? 1 : 0) - this.talking) * Math.min(1, dt * 3);
     applyPose(this.rig, idlePose(this.t, this.seed, this.talking, this.seated));
+    if (this.face && this.talking > 0.01) {
+      // The head leads the body round and tilts toward the commander's eye line.
+      const hd = this.head();
+      const pitch = Math.atan2(this.face.y - hd.y, Math.hypot(this.face.x - hd.x, this.face.z - hd.z));
+      this.rig.head.rotation.y += clamp(d, FACE.headYaw) * this.talking;
+      this.rig.head.rotation.x += clamp(pitch, FACE.headPitch) * this.talking;
+    }
+    animateFace(this.rig.face, this.t, this.seed, this.talking);
   }
 }

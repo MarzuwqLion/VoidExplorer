@@ -9,6 +9,7 @@ import type { DGraph, Effect } from '../data/dialogue/types';
 import type { Npc } from '../world/npc';
 import type { PlayerCmd } from '../player/controller';
 import { CameraRig } from '../player/camera';
+import { DIALOGUE_LIGHT } from '../data/tuning';
 
 /** Shared base for scenes where the commander walks: bridge, planets, test gym. */
 export abstract class WalkScene extends Scene {
@@ -20,6 +21,10 @@ export abstract class WalkScene extends Scene {
   private talkingTo: Npc | null = null;
   private logOpen = false;
   protected weaponPose: WeaponPose | null = null;
+  /** Conversation key and rim lights; always present (at zero) so starting a conversation never recompiles shaders. */
+  private keyLight = new THREE.PointLight(DIALOGUE_LIGHT.keyColor, 0, DIALOGUE_LIGHT.range, 2);
+  private rimLight = new THREE.PointLight(DIALOGUE_LIGHT.rimColor, 0, DIALOGUE_LIGHT.range, 2);
+  private talkLight = 0;
   protected abstract armed: boolean;
   protected abstract helmet: boolean;
   protected abstract hudMode: 'bridge' | 'planet';
@@ -29,6 +34,7 @@ export abstract class WalkScene extends Scene {
     this.world = world;
     this.commander = new CommanderView(this.armed, this.helmet);
     this.three.add(this.commander.root);
+    this.three.add(this.keyLight, this.rimLight);
     this.hud = new Hud(this.game.ui.hud, this.hudMode);
     this.world.cam.shakeEnabled = this.game.settings.shake;
     this.onExit(() => {
@@ -62,7 +68,7 @@ export abstract class WalkScene extends Scene {
     this.talkingTo = npc;
     g.audio.play('ui_open');
     if (npc) {
-      npc.faceToward(this.world.player.pos);
+      npc.faceToward(this.world.head());
       const head = npc.head();
       const me = this.world.head();
       const shot = CameraRig.dialogueShot(me, head, this.world.physics);
@@ -149,5 +155,26 @@ export abstract class WalkScene extends Scene {
     this.commander.update(frameDt, alpha, this.world.player, this.weaponPose, cam.headDist);
     for (const n of this.npcs) n.update(frameDt);
     cam.apply(this.camera, alpha);
+    this.updateTalkLight(frameDt);
+  }
+
+  /** Fade the conversation lights in around the speaker's head, placed from the dialogue shot. */
+  private updateTalkLight(dt: number): void {
+    const L = DIALOGUE_LIGHT;
+    const shot = this.world.cam.dialogue;
+    this.talkLight += ((this.talkingTo && shot ? 1 : 0) - this.talkLight) * Math.min(1, dt * L.fade);
+    if (this.talkingTo && shot) {
+      const head = this.talkingTo.head();
+      const toCam = new THREE.Vector3().subVectors(shot.pos, head).setY(0).normalize();
+      const side = new THREE.Vector3(-toCam.z, 0, toCam.x);
+      // Of the two sides, light from the one further from the commander so the key never blows out the shoulder.
+      const me = this.world.head();
+      const a = head.clone().addScaledVector(toCam, L.keyDist).addScaledVector(side, L.keySide);
+      const b = head.clone().addScaledVector(toCam, L.keyDist).addScaledVector(side, -L.keySide);
+      this.keyLight.position.copy(a.distanceToSquared(me) > b.distanceToSquared(me) ? a : b).y += L.keyUp;
+      this.rimLight.position.copy(head).addScaledVector(toCam, -L.rimBack).y += L.rimUp;
+    }
+    this.keyLight.intensity = L.key * this.talkLight;
+    this.rimLight.intensity = L.rim * this.talkLight;
   }
 }

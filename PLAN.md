@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: M14 Character detail pass (owner request).
+Next up: Done. M0 to M14 ticked. Owner playtest per README checklist.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -66,8 +66,8 @@ Next up: M14 Character detail pass (owner request).
 - [x] M13 Crew dialogue depth (owner request after M12)
   - [x] state-based greetings, personal threads, crew opinions, naming choice, upgrade reactions; unit tests
   - [x] dialogue graph test, bridge e2e and both full-loop orders pass
-- [ ] M14 Character detail pass (owner request)
-  - [ ] smooth-shaded sculpted heads with eyes, brows, ears, jaw; multi-piece hair; rounded limbs with joint caps; hands and boots
-  - [ ] uniform details and a signature item per crew member and planet character; armour plates for the commander and raiders
-  - [ ] blinking, head tracking and brow movement in conversation; dialogue key and rim light
-  - [ ] draw calls within budget; unit tests for rig parts and finite geometry; dialogue screenshots reviewed
+- [x] M14 Character detail pass (owner request)
+  - [x] smooth-shaded sculpted heads with eyes, brows, ears, jaw; multi-piece hair; rounded limbs with joint caps; hands and boots
+  - [x] uniform details and a signature item per crew member and planet character; armour plates for the commander and raiders
+  - [x] blinking, head tracking and brow movement in conversation; dialogue key and rim light
+  - [x] draw calls within budget; unit tests for rig parts and finite geometry; dialogue screenshots reviewed
