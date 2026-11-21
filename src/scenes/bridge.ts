@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { BridgeFx, screenMaterial } from '../world/bridgeFx';
 import { GRADES } from '../data/atmosphere';
 import { WalkScene } from './walkScene';
 import { WalkWorld } from '../world/walkWorld';
@@ -31,7 +32,7 @@ export class BridgeScene extends WalkScene {
   protected hudMode = 'bridge' as const;
   private holo: THREE.Group | null = null;
   private t = 0;
-  private screens: THREE.MeshStandardMaterial[] = [];
+  private fx!: BridgeFx;
 
   enter(): void {
     const g = this.game;
@@ -145,10 +146,12 @@ export class BridgeScene extends WalkScene {
     this.holo = buildHologram();
     this.holo.position.set(B.mapTable.x, 1.55, B.mapTable.z);
     this.three.add(this.holo);
-    // Animated console screens.
+    // Animated console screens, dust in the light, and the hull nose with its running lights outside the viewport.
+    this.fx = new BridgeFx();
+    this.three.add(this.fx.group);
     const addScreen = (x: number, y: number, z: number, w: number, h: number, rotY: number, color: number) => {
-      const m = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: color, emissiveIntensity: 1.2 });
-      this.screens.push(m);
+      const m = screenMaterial(color, this.fx.screens.length + 1);
+      this.fx.screens.push(m);
       const s = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m);
       s.position.set(x, y, z);
       s.rotation.y = rotY;
@@ -214,6 +217,6 @@ export class BridgeScene extends WalkScene {
   render(alpha: number, frameDt: number): void {
     super.render(alpha, frameDt);
     if (this.holo) this.holo.rotation.y += frameDt * 0.15;
-    this.screens.forEach((m, i) => (m.emissiveIntensity = 1.0 + Math.sin(this.t * (1.3 + i * 0.4) + i) * 0.25));
+    this.fx.update(frameDt);
   }
 }

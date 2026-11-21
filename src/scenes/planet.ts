@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { GRADES } from '../data/atmosphere';
 import { Snow } from '../world/snow';
+import { Ambience } from '../world/ambience';
+import { buildScatter } from '../world/scatter';
 import { FieldScene } from './fieldScene';
 import { WalkWorld, type Interactable } from '../world/walkWorld';
 import { buildLevelView } from '../world/levelView';
@@ -43,6 +45,7 @@ export class PlanetScene extends FieldScene {
   private beam = new ScanBeam();
   private beacon: THREE.Mesh | null = null;
   private snow: Snow | null = null;
+  private ambience!: Ambience;
   private lamp: THREE.PointLight | null = null;
   boss: Enemy | null = null;
   bossName = '';
@@ -87,11 +90,9 @@ export class PlanetScene extends FieldScene {
     this.three.add(this.sun, this.sun.target);
     this.camera.far = 1200;
     this.three.add(this.beam.mesh);
-    for (const l of level.lamps ?? []) {
-      const lamp = new THREE.PointLight(l.color, l.intensity, l.range, 1.6);
-      lamp.position.set(l.x, l.y, l.z);
-      this.three.add(lamp);
-    }
+    // Work lights, mist, shafts, steam, motes and the flock; ground scatter and drifts.
+    this.ambience = new Ambience(this.planet, level.sky.sunDir, level.lamps ?? [], world.physics);
+    this.three.add(this.ambience.group, buildScatter(this.planet, level.terrain, world.physics, world.level.prims));
     if (level.weather === 'snow') {
       const nav = world.nav, terrain = level.terrain;
       const overhead = level.prims.flatMap((p) =>
@@ -386,6 +387,8 @@ export class PlanetScene extends FieldScene {
     for (const n of this.nodes.values()) if (!n.done) n.view.rotation.y += frameDt * 0.4;
     if (this.lamp) this.lamp.position.set(p.x, p.y + 2.2, p.z).addScaledVector(this.world.cam.forward(), 1.5);
     if (this.beacon) (this.beacon.material as THREE.MeshBasicMaterial).opacity = 0.35 + Math.sin(this.t * 3) * 0.1;
+    this.ambience.update(frameDt, p);
+    if (this.snow) this.snow.wind = this.ambience.wind;
     this.snow?.update(frameDt, p);
   }
 

@@ -1,6 +1,6 @@
 # PLAN
 
-Next up: M17 Planet atmosphere (owner request).
+Next up: Done. M0 to M19 ticked. Owner playtest per README checklist.
 
 - [x] M0 Foundation
   - [x] e2e loads title screen, screenshot not blank
@@ -80,10 +80,10 @@ Next up: M17 Planet atmosphere (owner request).
   - [x] mortar blasts: fireball, sparks, chips, smoke column, shockwave ring, scorch, light flash; hit-stop on kills and headshots
   - [x] grade pass: per-scene colour grade, vignette, grain, roadie-run edge blur, hit colour fringe
   - [x] unit tests for pools; fx e2e screenshots reviewed; draw calls within budget; full suite green
-- [ ] M17 Planet atmosphere (owner request)
-  - [ ] drifting spores, ground mist, sun shafts and lamp cones, steam vents, snow gusts and spindrift, flickering work lights, distant flock
-  - [ ] terrain crease shading; screenshots reviewed; draw calls within budget
-- [ ] M18 Ground and set detail (owner request)
-  - [ ] swaying grass and coral canopies, pebbles, scrap debris, snow drifts, ice patches; draw calls within budget
-- [ ] M19 Ship and small touches (owner request)
-  - [ ] animated console screens, bridge dust motes, hull nose with running lights; screenshots reviewed; full suite green
+- [x] M17 Planet atmosphere (owner request)
+  - [x] drifting spores, ground mist, sun shafts and lamp cones, steam vents, snow gusts and spindrift, flickering work lights, distant flock
+  - [x] terrain crease shading; screenshots reviewed; draw calls within budget
+- [x] M18 Ground and set detail (owner request)
+  - [x] swaying grass and coral canopies, pebbles, scrap debris, snow drifts, ice patches; draw calls within budget
+- [x] M19 Ship and small touches (owner request)
+  - [x] animated console screens, bridge dust motes, hull nose with running lights; screenshots reviewed; full suite green

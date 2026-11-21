@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { TERRAIN_SHADE } from '../data/ambience';
+import { valueNoise } from '../core/rng';
 
 export interface TerrainDef {
   min: number;
@@ -40,11 +42,17 @@ export function buildTerrainMesh(d: TerrainDef, arrays = terrainArrays(d)): THRE
   geo.computeVertexNormals();
   const nor = geo.attributes.normal as THREE.BufferAttribute;
   const col = new Float32Array(arrays.verts.length);
+  const n = arrays.n, T = TERRAIN_SHADE;
   for (let i = 0; i < arrays.verts.length / 3; i++) {
     const x = arrays.verts[i * 3], y = arrays.verts[i * 3 + 1], z = arrays.verts[i * 3 + 2];
     const slope = 1 - nor.getY(i);
     const c = d.color(x, z, y, slope);
-    col.set([c.r, c.g, c.b], i * 3);
+    // Creases darken and crests lighten (curvature from the grid neighbours); fine noise breaks up flat colour.
+    const gi = i % n, gj = Math.floor(i / n);
+    const h = (a: number, b: number) => arrays.verts[(Math.min(n - 1, Math.max(0, b)) * n + Math.min(n - 1, Math.max(0, a))) * 3 + 1];
+    const lap = (h(gi - 2, gj) + h(gi + 2, gj) + h(gi, gj - 2) + h(gi, gj + 2)) / 4 - y;
+    const k = 1 - Math.min(T.crease, Math.max(0, lap) * T.crease) + Math.min(T.ridge, Math.max(0, -lap) * T.ridge) + (valueNoise(x * T.variationScale, z * T.variationScale, 17) - 0.5) * T.variation;
+    col.set([c.r * k, c.g * k, c.b * k], i * 3);
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, flatShading: true });

@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { addSway } from './sway';
+import { TREE_SWAY } from '../data/ambience';
 import type { Prim, RockPrim, TreePrim, BoxPrim } from './level';
 import { Rng } from '../core/rng';
 import { quatYawPitch } from './level';
@@ -140,7 +142,10 @@ function buildTrees(trees: TreePrim[]): THREE.Group {
         new THREE.Vector3(sc, s.style === 'fan' ? sc : sc * 0.7, sc),
       );
     });
-    g.add(instanced(canopyGeo, material({ color: s.canopy, mat: 'organic', emissive: s.style === 'fan' ? s.canopy & 0x0f0f0f : 0 }), cMats));
+    // Canopies sway in the wind (their own material copy so shared prop materials stay still).
+    const canopyMat = material({ color: s.canopy, mat: 'organic', emissive: s.style === 'fan' ? s.canopy & 0x0f0f0f : 0 }).clone();
+    addSway(canopyMat, TREE_SWAY, false);
+    g.add(instanced(canopyGeo, canopyMat, cMats));
   }
   return g;
 }

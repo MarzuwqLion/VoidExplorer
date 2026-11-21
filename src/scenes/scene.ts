@@ -66,6 +66,9 @@ export function disposeObject(root: THREE.Object3D): void {
   for (const g of geos) g.dispose();
   for (const m of mats) {
     for (const v of Object.values(m)) if (v instanceof THREE.Texture) v.dispose();
+    // Shader materials keep their textures in uniforms.
+    const u = (m as THREE.ShaderMaterial).uniforms;
+    if (u) for (const k of Object.keys(u)) if (u[k].value instanceof THREE.Texture) (u[k].value as THREE.Texture).dispose();
     m.dispose();
   }
   const bg = (root as THREE.Scene).background;

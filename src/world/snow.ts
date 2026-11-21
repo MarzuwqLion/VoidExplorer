@@ -12,6 +12,8 @@ export class Snow {
   private shown: Float32Array;
   private roofs = new Map<number, number>();
   private origin = new THREE.Vector3();
+  /** Wind multiplier on the sideways drift; gusts raise it. */
+  wind = 1;
 
   /**
    * @param overhead visual-only slabs (roofs without colliders) that also keep snow out, as centre, half extents,
@@ -61,7 +63,7 @@ export class Snow {
     for (let i = 0; i < s.length; i += 3) {
       let y = s[i + 1] - dt * SNOW.fall;
       if (y < 0) y += SNOW.height;
-      let x = s[i] + dt * SNOW.drift;
+      let x = s[i] + dt * SNOW.drift * this.wind;
       if (x > half) x -= SNOW.box;
       s[i] = x;
       s[i + 1] = y;
